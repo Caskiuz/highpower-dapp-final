@@ -3,12 +3,13 @@ import { useAccount, useConnect, useDisconnect, useReadContract, useSimulateCont
 import { ContractFunctionExecutionError } from 'viem';
 
 // IMPORTAR ABIs de tus contratos (¡Ajusta las rutas!)
-// Si tienes los ABIs de tus contratos de Solidity, cópialos a la carpeta `public` de este proyecto Vite.
+// Si tienes los ABIs de tus contratos de Solidity (ej., SimpleToken.json, MyNFT.json),
+// cópialos a la carpeta `public/abis` dentro de tu proyecto `highpower-dapp-final`.
 // Luego puedes importarlos así:
-// import SimpleTokenABI from '/public/abis/SimpleToken.json';
-// import MyNFTABI from '/public/abis/MyNFT.json';
+// import SimpleTokenABI from '/abis/SimpleToken.json';
+// import MyNFTABI from '/abis/MyNFT.json';
 
-// Para que compile, usaremos ABIs de ejemplo.
+// Por simplicidad para que compile ahora, usaremos ABIs de ejemplo.
 // !! RECUERDA REEMPLAZAR ESTOS CON TUS ABIs REALES DESPUÉS DE DESPLEGAR TUS CONTRATOS. !!
 const SimpleTokenABI = { "abi": [ { "inputs": [ { "internalType": "string", "name": "name", "type": "string" }, { "internalType": "string", "name": "symbol", "type": "string" }, { "internalType": "uint256", "name": "initialSupply", "type": "uint256" } ], "stateMutability": "nonpayable", "type": "constructor" }, { "inputs": [ { "internalType": "address", "name": "account", "type": "address" } ], "name": "balanceOf", "outputs": [ { "internalType": "uint256", "name": "", "type": "uint256" } ], "stateMutability": "view", "type": "function" } ] };
 // <<-- ¡¡MYNFTABI CORREGIDO: AHORA INCLUYE LA FUNCIÓN mintNFT!! -->>
@@ -31,7 +32,7 @@ function App() {
   // useSimulateContract para acuñar NFT
   const { data: mintNftConfig, error: simulateMintNftError } = useSimulateContract({
     address: MY_NFT_CONTRACT_ADDRESS,
-    abi: MyNFTABI.abi,
+    abi: MyNFTABI.abi, // <<-- ¡¡AHORA ESTE ABI TIENE mintNFT!! -->>
     functionName: 'mintNFT',
     args: [address, nftTokenURI],
     enabled: isConnected && !!address && !isMintingNFT,
@@ -76,7 +77,7 @@ function App() {
     watch: true,
   });
 
-  // <<-- LÍNEAS DE DEPURACIÓN -->>
+  // LÍNEAS DE DEPURACIÓN
   console.log("Estado de conexión:", {
     isConnected,
     address,
@@ -85,7 +86,6 @@ function App() {
     error: error?.message,
     connectors: connectors.map(c => ({ id: c.id, name: c.name, ready: c.ready }))
   });
-  // <<-- FIN DE LÍNEAS DE DEPURACIÓN -->>
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
@@ -114,8 +114,7 @@ function App() {
                 key={connector.id}
                 onClick={() => connect({ connector })}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                // <<-- ¡¡CAMBIO DE DEPURACIÓN: RESTAURAR PROPIEDAD DISABLED!! -->>
-                disabled={!connector.ready || isConnecting} // Ya no comentado
+                disabled={!connector.ready || isConnecting}
               >
                 {isConnecting && connector.id === pendingConnector?.id
                   ? 'Conectando...'
