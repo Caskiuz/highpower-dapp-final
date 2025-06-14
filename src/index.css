@@ -1,0 +1,18 @@
+/* Directivas de Tailwind CSS */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Estilos globales para asegurar que el fondo oscuro de Tailwind se aplique a toda la página */
+html, body, #root {
+  height: 100%; /* Asegura que ocupen toda la altura de la ventana */
+  margin: 0; /* Elimina cualquier margen predeterminado del navegador */
+  padding: 0; /* Elimina cualquier padding predeterminado */
+  /* Aunque Tailwind añade bg-gray-900 a un div, forzamos un color de fondo para la seguridad visual */
+  background-color: #1a202c; /* Un gris oscuro, similar al bg-gray-900 de Tailwind */
+  color: #ffffff; /* Texto blanco predeterminado */
+}
+
+/* Puedes añadir más estilos base aquí si es necesario */
+
+
