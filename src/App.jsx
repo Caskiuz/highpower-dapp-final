@@ -1,18 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAccount, useConnect, useDisconnect, useReadContract, useSimulateContract, useWriteContract } from 'wagmi';
 import { ContractFunctionExecutionError } from 'viem';
 
 // IMPORTAR ABIs de tus contratos (¡Ajusta las rutas!)
-// Si tienes los ABIs de tus contratos de Solidity (ej., SimpleToken.json, MyNFT.json),
-// cópialos a la carpeta `public/abis` dentro de tu proyecto `highpower-dapp-final`.
+// Si tienes los ABIs de tus contratos de Solidity, cópialos a la carpeta `public` de este proyecto Vite.
 // Luego puedes importarlos así:
-// import SimpleTokenABI from '/abis/SimpleToken.json';
-// import MyNFTABI from '/abis/MyNFT.json';
+// import SimpleTokenABI from '/public/abis/SimpleToken.json'; // Nota: La ruta empieza con '/' para public
+// import MyNFTABI from '/public/abis/MyNFT.json';
 
-// Por simplicidad para que compile ahora, usaremos ABIs de ejemplo.
-// !! RECUERDA REEMPLAZAR ESTOS CON TUS ABIs REALES DESPUÉS DE DESPLEGAR TUS CONTRATOS. !!
+// ABIs de ejemplo para que el código compile si aún no tienes los tuyos.
 const SimpleTokenABI = { "abi": [ { "inputs": [ { "internalType": "string", "name": "name", "type": "string" }, { "internalType": "string", "name": "symbol", "type": "string" }, { "internalType": "uint256", "name": "initialSupply", "type": "uint256" } ], "stateMutability": "nonpayable", "type": "constructor" }, { "inputs": [ { "internalType": "address", "name": "account", "type": "address" } ], "name": "balanceOf", "outputs": [ { "internalType": "uint256", "name": "", "type": "uint256" } ], "stateMutability": "view", "type": "function" } ] };
-// <<-- ¡¡MYNFTABI CORREGIDO: AHORA INCLUYE LA FUNCIÓN mintNFT!! -->>
 const MyNFTABI = { "abi": [ { "inputs": [ { "internalType": "string", "name": "name_", "type": "string" }, { "internalType": "string", "name": "symbol_", "type": "string" } ], "stateMutability": "nonpayable", "type": "constructor" }, { "anonymous": false, "inputs": [ { "indexed": false, "internalType": "uint256", "name": "tokenId", "type": "uint256" }, { "indexed": false, "internalType": "address", "name": "recipient", "type": "address" }, { "indexed": false, "internalType": "string", "name": "tokenURI", "type": "string" } ], "name": "NFTMinted", "type": "event" }, { "inputs": [ { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "string", "name": "tokenURI_", "type": "string" } ], "name": "mintNFT", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [ { "internalType": "uint256", "name": "tokenId", "type": "uint256" } ], "name": "tokenURI", "outputs": [ { "internalType": "string", "name": "", "type": "string" } ], "stateMutability": "view", "type": "function" } ] };
 
 
@@ -28,11 +25,13 @@ function App() {
   const [nftMintingMessage, setNftMintingMessage] = useState('');
   const [isMintingNFT, setIsMintingNFT] = useState(false);
   const [nftTokenURI, setNftTokenURI] = useState('ipfs://QmZ4Y9pMv2oW2f7v8k3f3h3g3d3c3b3a3c3e3f3g3h3i3j3k3l3m3n3o3p3q3r3s3t3u3v3w3x3y3z');
+  const [isManualMetaMaskReady, setIsManualMetaMaskReady] = useState(false); // Estado para la detección manual
+  const [isConnectingLocally, setIsConnectingLocally] = useState(false); // Estado para evitar doble clic
 
   // useSimulateContract para acuñar NFT
   const { data: mintNftConfig, error: simulateMintNftError } = useSimulateContract({
     address: MY_NFT_CONTRACT_ADDRESS,
-    abi: MyNFTABI.abi, // <<-- ¡¡AHORA ESTE ABI TIENE mintNFT!! -->>
+    abi: MyNFTABI.abi,
     functionName: 'mintNFT',
     args: [address, nftTokenURI],
     enabled: isConnected && !!address && !isMintingNFT,
@@ -77,15 +76,43 @@ function App() {
     watch: true,
   });
 
-  // LÍNEAS DE DEPURACIÓN
-  console.log("Estado de conexión:", {
-    isConnected,
-    address,
-    isConnecting,
-    pendingConnector: pendingConnector?.id,
-    error: error?.message,
-    connectors: connectors.map(c => ({ id: c.id, name: c.name, ready: c.ready }))
-  });
+  // Efecto para la detección manual de MetaMask y actualización del estado
+  useEffect(() => {
+    const checkAndSetManualReady = () => {
+      if (typeof window.ethereum !== 'undefined' && window.ethereum.isMetaMask) {
+        console.log("SUCCESS: MetaMask (window.ethereum) fue detectado. Estableciendo isManualMetaMaskReady a true.");
+        setIsManualMetaMaskReady(true);
+      } else {
+        console.warn("ADVERTENCIA: window.ethereum (MetaMask) aún NO detectado o no es MetaMask.");
+        setIsManualMetaMaskReady(false);
+      }
+      console.log("Estado de Wagmi Connectors (dentro de useEffect):", connectors.map(c => ({ id: c.id, name: c.name, ready: c.ready })));
+    };
+
+    // Ejecuta al montar y con un pequeño retraso
+    checkAndSetManualReady();
+    const timer = setTimeout(checkAndSetManualReady, 1000); // Reintenta después de 1 segundo
+
+    // Limpia el temporizador
+    return () => clearTimeout(timer);
+  }, [connectors]); // Dependencia en `connectors` para re-ejecutar si cambian
+
+  // Manejador de clic para los botones de conexión
+  const handleConnectClick = async (connector) => {
+    if (isConnectingLocally || isConnecting) {
+      console.log("Ya hay un intento de conexión en progreso.");
+      return;
+    }
+
+    setIsConnectingLocally(true);
+    try {
+      await connect({ connector });
+    } catch (err) {
+      console.error("Error durante el intento de conexión:", err);
+    } finally {
+      setIsConnectingLocally(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
@@ -109,19 +136,31 @@ function App() {
           </div>
         ) : (
           <div className="flex flex-col space-y-2">
-            {connectors.map((connector) => (
-              <button
-                key={connector.id}
-                onClick={() => connect({ connector })}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!connector.ready || isConnecting}
-              >
-                {isConnecting && connector.id === pendingConnector?.id
-                  ? 'Conectando...'
-                  : `Conectar con ${connector.name}`}
-              </button>
-            ))}
-            {error && <p className="text-red-500 mt-2 text-center">{error.message}</p>}
+            {connectors.map((connector) => {
+              // Lógica de habilitación del botón:
+              // - Si es MetaMask o Injected, y isManualMetaMaskReady es true (lo hemos detectado)
+              // - O si Wagmi.ready del conector es true (el caso ideal)
+              const isActuallyReady = (
+                (connector.id === 'metaMaskSDK' || connector.id === 'injected') && isManualMetaMaskReady
+              ) || connector.ready; // Fallback al ready de Wagmi
+
+              // El botón siempre estará deshabilitado si ya estamos conectando (isConnecting o isConnectingLocally)
+              const isDisabled = !isActuallyReady || isConnecting || isConnectingLocally;
+
+              return (
+                <button
+                  key={connector.id}
+                  onClick={() => handleConnectClick(connector)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isDisabled}
+                >
+                  {isConnecting || isConnectingLocally && connector.id === pendingConnector?.id
+                    ? 'Conectando...'
+                    : `Conectar con ${connector.name} (Ready: ${String(isActuallyReady)})`}
+                </button>
+              );
+            })}
+            {error && <p className="text-red-500 mt-2 text-center">Error: {error.message}</p>}
           </div>
         )}
       </div>
