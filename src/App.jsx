@@ -2,38 +2,36 @@ import React, { useState, useEffect } from 'react';
 import { useAccount, useConnect, useDisconnect, useReadContract, useSimulateContract, useWriteContract } from 'wagmi';
 import { ContractFunctionExecutionError } from 'viem';
 
-// IMPORTAR ABIs de tus contratos (¡Ajusta las rutas!)
-// Si tienes los ABIs de tus contratos de Solidity, cópialos a la carpeta `public` de este proyecto Vite.
-// Luego puedes importarlos así:
-// import SimpleTokenABI from '/public/abis/SimpleToken.json'; // Nota: La ruta empieza con '/' para public
-// import MyNFTABI from '/public/abis/MyNFT.json';
-
-// ABIs de ejemplo para que el código compile si aún no tienes los tuyos.
-const SimpleTokenABI = { "abi": [ { "inputs": [ { "internalType": "string", "name": "name", "type": "string" }, { "internalType": "string", "name": "symbol", "type": "string" }, { "internalType": "uint256", "name": "initialSupply", "type": "uint256" } ], "stateMutability": "nonpayable", "type": "constructor" }, { "inputs": [ { "internalType": "address", "name": "account", "type": "address" } ], "name": "balanceOf", "outputs": [ { "internalType": "uint256", "name": "", "type": "uint256" } ], "stateMutability": "view", "type": "function" } ] };
-const MyNFTABI = { "abi": [ { "inputs": [ { "internalType": "string", "name": "name_", "type": "string" }, { "internalType": "string", "name": "symbol_", "type": "string" } ], "stateMutability": "nonpayable", "type": "constructor" }, { "anonymous": false, "inputs": [ { "indexed": false, "internalType": "uint256", "name": "tokenId", "type": "uint256" }, { "indexed": false, "internalType": "address", "name": "recipient", "type": "address" }, { "indexed": false, "internalType": "string", "name": "tokenURI", "type": "string" } ], "name": "NFTMinted", "type": "event" }, { "inputs": [ { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "string", "name": "tokenURI_", "type": "string" } ], "name": "mintNFT", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [ { "internalType": "uint256", "name": "tokenId", "type": "uint256" } ], "name": "tokenURI", "outputs": [ { "internalType": "string", "name": "", "type": "string" } ], "stateMutability": "view", "type": "function" } ] };
+// IMPORTAR ABIs de tus contratos
+import SimpleTokenABI from './abis/SimpleToken.json';
+import MyNFTABI from './abis/MyNFT.json';
 
 
-// !! IMPORTANTE: Reemplaza estas direcciones con las de tus contratos desplegados en BNB Testnet !!
-const SIMPLE_TOKEN_CONTRACT_ADDRESS = '0xE02F5740F01EDBC5ccAE634312f7C6a90a31053B'; // Tu dirección de SimpleToken
-const MY_NFT_CONTRACT_ADDRESS = '0x4732ecF022235C877f60Ca000eEA7c19440f436F'; // Tu dirección de MyNFT
+// !! IMPORTANTE: Mantén estas direcciones como las que Hardhat te dio en el último despliegue !!
+const SIMPLE_TOKEN_CONTRACT_ADDRESS = '0x03Fd2cE62B4BB54f09716f9588A5E13bC0756773'; // Dirección REAL de tu SimpleToken (HGP)
+const MY_NFT_CONTRACT_ADDRESS = '0x11Cae128d6AD9A00ceAF179171321F2E0abE30a8'; // Dirección REAL de tu MyNFT (HPNFT)
 
 function App() {
   const { address, isConnected } = useAccount();
   const { connect, connectors, error, isConnecting, pendingConnector } = useConnect();
   const { disconnect } = useDisconnect();
 
+  // ***** CORRECCIÓN AQUI: Declaración de estados faltantes *****
+  const [isManualMetaMaskReady, setIsManualMetaMaskReady] = useState(false);
+  const [isConnectingLocally, setIsConnectingLocally] = useState(false);
+  // **********************************************************
+
   const [nftMintingMessage, setNftMintingMessage] = useState('');
   const [isMintingNFT, setIsMintingNFT] = useState(false);
-  const [nftTokenURI, setNftTokenURI] = useState('ipfs://QmZ4Y9pMv2oW2f7v8k3f3h3g3d3c3b3a3c3e3f3g3h3i3j3k3l3m3n3o3p3q3r3s3t3u3v3w3x3y3z');
-  const [isManualMetaMaskReady, setIsManualMetaMaskReady] = useState(false); // Estado para la detección manual
-  const [isConnectingLocally, setIsConnectingLocally] = useState(false); // Estado para evitar doble clic
+  const [nftTokenURI, setNftTokenURI] = useState('ipfs://QmZ4Y9pMv2oW2f7v8k3f3h3g3d3c3b3a3c3e3e3g3h3i3j3k3l3m3n3o3p3q3r3s3t3u3v3w3x3y3y3z'); // URI de ejemplo
+
 
   // useSimulateContract para acuñar NFT
   const { data: mintNftConfig, error: simulateMintNftError } = useSimulateContract({
     address: MY_NFT_CONTRACT_ADDRESS,
-    abi: MyNFTABI.abi,
-    functionName: 'mintNFT',
-    args: [address, nftTokenURI],
+    abi: MyNFTABI.abi, // Usa el ABI real importado
+    functionName: 'mint', // Función 'mint' en el nuevo contrato MyNFT.sol
+    args: [nftTokenURI], // Solo el tokenURI, ya que acuña a msg.sender
     enabled: isConnected && !!address && !isMintingNFT,
   });
 
@@ -69,7 +67,7 @@ function App() {
   // useReadContract para leer el balance de HGP
   const { data: hgpBalance, isLoading: isHGPBalanceLoading, refetch: refetchHGPBalance } = useReadContract({
     address: SIMPLE_TOKEN_CONTRACT_ADDRESS,
-    abi: SimpleTokenABI.abi,
+    abi: SimpleTokenABI.abi, // Usa el ABI real importado
     functionName: 'balanceOf',
     args: [address],
     enabled: isConnected && !!address,
@@ -86,31 +84,29 @@ function App() {
         console.warn("ADVERTENCIA: window.ethereum (MetaMask) aún NO detectado o no es MetaMask.");
         setIsManualMetaMaskReady(false);
       }
-      console.log("Estado de Wagmi Connectors (dentro de useEffect):", connectors.map(c => ({ id: c.id, name: c.name, ready: c.ready })));
     };
 
-    // Ejecuta al montar y con un pequeño retraso
     checkAndSetManualReady();
-    const timer = setTimeout(checkAndSetManualReady, 1000); // Reintenta después de 1 segundo
+    const timer = setTimeout(checkAndSetManualReady, 1000); // Re-verificar después de 1 segundo
 
-    // Limpia el temporizador
-    return () => clearTimeout(timer);
-  }, [connectors]); // Dependencia en `connectors` para re-ejecutar si cambian
+    return () => clearTimeout(timer); // Limpiar el timer si el componente se desmonta
+  }, [connectors]); // Dependencia en 'connectors' para re-ejecutar si cambian los conectores
 
   // Manejador de clic para los botones de conexión
   const handleConnectClick = async (connector) => {
+    // Evitar múltiples intentos de conexión si ya hay uno en progreso
     if (isConnectingLocally || isConnecting) {
       console.log("Ya hay un intento de conexión en progreso.");
       return;
     }
 
-    setIsConnectingLocally(true);
+    setIsConnectingLocally(true); // Indicar que estamos iniciando una conexión localmente
     try {
       await connect({ connector });
     } catch (err) {
       console.error("Error durante el intento de conexión:", err);
     } finally {
-      setIsConnectingLocally(false);
+      setIsConnectingLocally(false); // Siempre resetear el estado local al finalizar
     }
   };
 
@@ -137,14 +133,12 @@ function App() {
         ) : (
           <div className="flex flex-col space-y-2">
             {connectors.map((connector) => {
-              // Lógica de habilitación del botón:
-              // - Si es MetaMask o Injected, y isManualMetaMaskReady es true (lo hemos detectado)
-              // - O si Wagmi.ready del conector es true (el caso ideal)
+              // Lógica mejorada para determinar si el conector está "listo"
               const isActuallyReady = (
-                (connector.id === 'metaMaskSDK' || connector.id === 'injected') && isManualMetaMaskReady
-              ) || connector.ready; // Fallback al ready de Wagmi
+                // Para MetaMask o conectores inyectados, usamos nuestra detección manual
+                (connector.id === 'metaMaskSDK' || connector.id === 'injected') ? isManualMetaMaskReady : connector.ready
+              );
 
-              // El botón siempre estará deshabilitado si ya estamos conectando (isConnecting o isConnectingLocally)
               const isDisabled = !isActuallyReady || isConnecting || isConnectingLocally;
 
               return (
@@ -154,7 +148,7 @@ function App() {
                   className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={isDisabled}
                 >
-                  {isConnecting || isConnectingLocally && connector.id === pendingConnector?.id
+                  {isConnecting || (isConnectingLocally && connector.id === pendingConnector?.id)
                     ? 'Conectando...'
                     : `Conectar con ${connector.name} (Ready: ${String(isActuallyReady)})`}
                 </button>
@@ -182,7 +176,7 @@ function App() {
               value={nftTokenURI}
               onChange={(e) => setNftTokenURI(e.target.value)}
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600"
-              placeholder="ej., ipfs://QmZ4Y9pMv2oW2f7v8k3f3h3g3d3c3b3a3c3e3f3g3h3i3j3k3l3m3n3o3p3q3r3s3t3u3v3w3x3y3z"
+              placeholder="ej., ipfs://QmZ4Y9pMv2oW2f7v8k3f3h3g3d3c3b3a3c3e3f3g3h3i3j3k3l3m3n3o3p3q3r3s3t3u3v3w3x3y3y3z"
               disabled={isMintingNFT}
             />
              <p className="text-xs text-gray-500 mt-1">
@@ -231,7 +225,6 @@ function App() {
               </p>
             )
           )}
-          {/* Aquí podrías añadir más funciones para el token HGP, como transferencias */}
         </div>
       )}
     </div>
