@@ -10,11 +10,12 @@ import {
   useWaitForTransactionReceipt,
   useBalance,
   useReadContract,
-  createStorage, // <--- CAMBIO AQUÍ: Importamos createStorage directamente de 'wagmi'
+  // ELIMINADO: createStorage ya NO se importa de ninguna parte
 } from 'wagmi';
 import { bsc, bscTestnet, mainnet, sepolia } from 'wagmi/chains';
 import { injected, walletConnect, coinbaseWallet } from '@wagmi/connectors';
 import { formatEther } from 'viem';
+// ELIMINADO: La importación de createStorage desde 'wagmi/window' ya no es necesaria.
 
 // 1. Wagmi Configuration
 const config = createConfig({
@@ -25,7 +26,7 @@ const config = createConfig({
       appName: 'HighPower DApp',
       preference: 'smartWalletOnly',
     }),
-    walletConnect({ projectId: '56246e8df9c9151e77b7e93def28838e' }), // Su ID de Proyecto
+    walletConnect({ projectId: '56246e8df9c9151e77b7e93def28838e' }),
   ],
   transports: {
     [mainnet.id]: http(),
@@ -33,9 +34,9 @@ const config = createConfig({
     [bsc.id]: http(),
     [bscTestnet.id]: http(),
   },
-  // Configuración de persistencia para Wagmi
-  // Le pasamos localStorage directamente a createStorage
-  storage: createStorage({ storage: localStorage }),
+  // CAMBIO CRÍTICO: Pasamos localStorage directamente como mecanismo de almacenamiento.
+  // Wagmi lo envolverá internamente. Esto ELIMINA la necesidad de importar createStorage.
+  storage: localStorage,
 });
 
 // ABI de la función mint de su contrato MyNFT
@@ -220,7 +221,9 @@ function AppContent() {
             </div>
 
             <button
-              onClick={() => disconnect()}
+              onClick={() => {
+                disconnect();
+              }}
               className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 ease-in-out transform hover:scale-105"
               type="button"
             >
