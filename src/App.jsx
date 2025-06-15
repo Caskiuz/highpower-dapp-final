@@ -1,234 +1,307 @@
-import React, { useState, useEffect } from 'react';
-import { useAccount, useConnect, useDisconnect, useReadContract, useSimulateContract, useWriteContract } from 'wagmi';
-import { ContractFunctionExecutionError } from 'viem';
+import { useState, useEffect } from 'react';
+import {
+  createConfig,
+  WagmiConfig,
+  http,
+  useAccount,
+  useConnect,
+  useDisconnect,
+  useWriteContract,
+  useWaitForTransactionReceipt,
+  useBalance,
+  useReadContract,
+} from 'wagmi';
+import { bsc, bscTestnet, mainnet, sepolia } from 'wagmi/chains';
+import { injected, walletConnect, coinbaseWallet } from '@wagmi/connectors';
+import { formatEther } from 'viem';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { persistQueryClient } from '@tanstack/react-query-persist-client';
+import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
 
-// IMPORTAR ABIs de tus contratos
-import SimpleTokenABI from './abis/SimpleToken.json';
-import MyNFTABI from './abis/MyNFT.json';
 
+// Crear una instancia de QueryClient
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: Infinity, // Mantener los datos "frescos" indefinidamente
+      gcTime: 1000 * 60 * 60 * 24, // Mantener los datos en caché por 24 horas (ajustable)
+    },
+  },
+});
 
-// !! IMPORTANTE: Mantén estas direcciones como las que Hardhat te dio en el último despliegue !!
-const SIMPLE_TOKEN_CONTRACT_ADDRESS = '0x03Fd2cE62B4BB54f09716f9588A5E13bC0756773'; // Dirección REAL de tu SimpleToken (HGP)
-const MY_NFT_CONTRACT_ADDRESS = '0x11Cae128d6AD9A00ceAF179171321F2E0abE30a8'; // Dirección REAL de tu MyNFT (HPNFT)
+// Crear un persister para localStorage
+// Aseguramos que window.localStorage esté disponible antes de usarlo.
+const persister = createSyncStoragePersister({
+  storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+  key: 'wagmi.persister.highpower-dapp', // Clave única para tu aplicación en localStorage
+});
 
-function App() {
-  const { address, isConnected } = useAccount();
-  const { connect, connectors, error, isConnecting, pendingConnector } = useConnect();
+// Persistir el cliente de consulta al almacenamiento local
+// Esto se encarga de que Wagmi (que usa React Query internamente)
+// mantenga el estado de la conexión de la billetera.
+persistQueryClient({
+  queryClient,
+  persister,
+});
+
+// 1. Wagmi Configuration
+const config = createConfig({
+  chains: [mainnet, sepolia, bsc, bscTestnet],
+  connectors: [
+    injected(),
+    coinbaseWallet({
+      appName: 'HighPower DApp',
+      preference: 'smartWalletOnly',
+    }),
+    walletConnect({ projectId: '56246e8df9c9151e77b7e93def28838e' }), // Su ID de Proyecto actualizado
+  ],
+  transports: {
+    [mainnet.id]: http(),
+    [sepolia.id]: http(),
+    [bsc.id]: http(),
+    [bscTestnet.id]: http(),
+  },
+  // La persistencia ahora es manejada exclusivamente por persistQueryClient y QueryClientProvider.
+});
+
+// ABI de la función mint de su contrato MyNFT
+// Esta ABI corresponde a la función: function mint(string memory tokenURI_) public returns (uint256)
+// También incluye balanceOf para leer el balance de NFTs.
+const nftContractAbi = [
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "tokenURI_",
+        "type": "string"
+      }
+    ],
+    "name": "mint",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable", // Su ABI indica que es nonpayable
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      }
+    ],
+    "name": "balanceOf",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+];
+
+// Direcciones de contratos proporcionadas
+const SIMPLE_TOKEN_CONTRACT_ADDRESS = '0x03Fd2cE62B4BB54f09716f9588A5E13bC0756773';
+const NFT_CONTRACT_ADDRESS = '0x11Cae128d6AD9A00ceAF179171321F2E0abE30a8';
+
+function AppContent() {
+  const { address, isConnected, chain } = useAccount();
+  const { connect, connectors, pendingConnector } = useConnect();
   const { disconnect } = useDisconnect();
 
-  // ***** CORRECCIÓN AQUI: Declaración de estados faltantes *****
-  const [isManualMetaMaskReady, setIsManualMetaMaskReady] = useState(false);
-  const [isConnectingLocally, setIsConnectingLocally] = useState(false);
-  // **********************************************************
+  const { data: balanceData } = useBalance({ address: address });
 
-  const [nftMintingMessage, setNftMintingMessage] = useState('');
-  const [isMintingNFT, setIsMintingNFT] = useState(false);
-  const [nftTokenURI, setNftTokenURI] = useState('ipfs://QmZ4Y9pMv2oW2f7v8k3f3h3g3d3c3b3a3c3e3e3g3h3i3j3k3l3m3n3o3p3q3r3s3t3u3v3w3x3y3y3z'); // URI de ejemplo
-
-
-  // useSimulateContract para acuñar NFT
-  const { data: mintNftConfig, error: simulateMintNftError } = useSimulateContract({
-    address: MY_NFT_CONTRACT_ADDRESS,
-    abi: MyNFTABI.abi, // Usa el ABI real importado
-    functionName: 'mint', // Función 'mint' en el nuevo contrato MyNFT.sol
-    args: [nftTokenURI], // Solo el tokenURI, ya que acuña a msg.sender
-    enabled: isConnected && !!address && !isMintingNFT,
-  });
-
-  // useWriteContract para ejecutar la acuñación de NFT
-  const { writeContract: mintNFT, isPending: isMintingNFTTx } = useWriteContract({
-    onSuccess(data) {
-      setNftMintingMessage(`NFT acuñado! Hash de Tx: ${data.hash}.`);
-      setIsMintingNFT(false);
-    },
-    onError(err) {
-      if (err instanceof ContractFunctionExecutionError) {
-        setNftMintingMessage(`Error al acuñar NFT: ${err.shortMessage || err.message}`);
-      } else {
-        setNftMintingMessage(`Error al acuñar NFT: ${err.message}`);
-      }
-      setIsMintingNFT(false);
-    },
-  });
-
-  const handleMintNFT = async () => {
-    if (!mintNftConfig || !mintNftConfig.request || !mintNFT) {
-      setNftMintingMessage("Error: No se pudo preparar la función de acuñación. Conecte su billetera.");
-      if (simulateMintNftError) {
-        console.error("Error al simular la acuñación:", simulateMintNftError);
-      }
-      return;
-    }
-    setIsMintingNFT(true);
-    setNftMintingMessage('Acuñando NFT...');
-    mintNFT(mintNftConfig.request);
-  };
-
-  // useReadContract para leer el balance de HGP
-  const { data: hgpBalance, isLoading: isHGPBalanceLoading, refetch: refetchHGPBalance } = useReadContract({
-    address: SIMPLE_TOKEN_CONTRACT_ADDRESS,
-    abi: SimpleTokenABI.abi, // Usa el ABI real importado
+  const { data: nftBalance, isLoading: isLoadingNftBalance, error: nftBalanceError, refetch: refetchNftBalance } = useReadContract({
+    abi: nftContractAbi,
+    address: NFT_CONTRACT_ADDRESS,
     functionName: 'balanceOf',
     args: [address],
-    enabled: isConnected && !!address,
-    watch: true,
+    query: {
+      enabled: isConnected && !!address,
+    },
   });
 
-  // Efecto para la detección manual de MetaMask y actualización del estado
+  const { data: hash, isPending: isMinting, writeContract } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess: isConfirmed, error: confirmError } = useWaitForTransactionReceipt({
+    hash: hash,
+  });
+
+  const [tokenURI, setTokenURI] = useState('');
+  const [message, setMessage] = useState('');
+  const [showModal, setShowModal] = useState(false);
+
   useEffect(() => {
-    const checkAndSetManualReady = () => {
-      if (typeof window.ethereum !== 'undefined' && window.ethereum.isMetaMask) {
-        console.log("SUCCESS: MetaMask (window.ethereum) fue detectado. Estableciendo isManualMetaMaskReady a true.");
-        setIsManualMetaMaskReady(true);
-      } else {
-        console.warn("ADVERTENCIA: window.ethereum (MetaMask) aún NO detectado o no es MetaMask.");
-        setIsManualMetaMaskReady(false);
-      }
-    };
+    if (isConfirmed) {
+      refetchNftBalance(); // Vuelve a leer el balance después de una acuñación exitosa
+      showCustomModal('¡NFT acuñado con éxito! Tu balance se ha actualizado.');
+    }
+  }, [isConfirmed, refetchNftBalance]);
 
-    checkAndSetManualReady();
-    const timer = setTimeout(checkAndSetManualReady, 1000); // Re-verificar después de 1 segundo
+  const showCustomModal = (msg) => {
+    setMessage(msg);
+    setShowModal(true);
+  };
 
-    return () => clearTimeout(timer); // Limpiar el timer si el componente se desmonta
-  }, [connectors]); // Dependencia en 'connectors' para re-ejecutar si cambian los conectores
+  const closeModal = () => {
+    setShowModal(false);
+    setMessage('');
+  };
 
-  // Manejador de clic para los botones de conexión
-  const handleConnectClick = async (connector) => {
-    // Evitar múltiples intentos de conexión si ya hay uno en progreso
-    if (isConnectingLocally || isConnecting) {
-      console.log("Ya hay un intento de conexión en progreso.");
-      return;
+  const handleMintNFT = async () => {
+    if (!isConnected) {
+        showCustomModal('Por favor, conecta tu billetera primero para acuñar un NFT.');
+        return;
+    }
+    
+    if (!tokenURI.trim()) {
+        showCustomModal('Error: Por favor, ingresa una URI para el Token (ej. un hash IPFS o URL).');
+        return;
     }
 
-    setIsConnectingLocally(true); // Indicar que estamos iniciando una conexión localmente
     try {
-      await connect({ connector });
-    } catch (err) {
-      console.error("Error durante el intento de conexión:", err);
-    } finally {
-      setIsConnectingLocally(false); // Siempre resetear el estado local al finalizar
+      writeContract({
+        address: NFT_CONTRACT_ADDRESS,
+        abi: nftContractAbi,
+        functionName: 'mint',
+        args: [tokenURI],
+      });
+    } catch (error) {
+      console.error("Error al iniciar la transacción de acuñación:", error);
+      showCustomModal(`Error al intentar acuñar el NFT: ${error.message || error.toString()}.
+      Posibles causas:
+      1. El contrato desplegado en la blockchain no coincide exactamente con el código que ha proporcionado.
+      2. El contrato tiene restricciones internas (ej. límite de acuñación por billetera, suministro máximo alcanzado, acuñación pausada) que no se ven directamente en la función 'mint' principal.`);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
-      <h1 className="text-5xl font-bold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
-        HighPower DApp (BNB Chain)
-      </h1>
-
-      {/* Sección de conexión de billetera */}
-      <div className="mb-4">
-        {isConnected ? (
-          <div className="text-center">
-            <p className="text-lg mb-2 text-gray-400">
-              Conectado como: <span className="font-mono text-purple-300">{address}</span>
-            </p>
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4 font-inter">
+      {/* Custom Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+          <div className="bg-gray-800 p-6 rounded-lg shadow-xl text-center max-w-sm w-full border border-purple-600">
+            <h3 className="text-xl font-bold text-purple-300 mb-4">Mensaje Importante</h3>
+            <p className="text-gray-200 mb-6">{message}</p>
             <button
-              onClick={() => disconnect()}
-              className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105"
+              onClick={closeModal}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105"
             >
-              Desconectar Cartera
+              Entendido
             </button>
           </div>
+        </div>
+      )}
+
+      <div className="bg-gray-800 p-8 rounded-lg shadow-xl text-center max-w-lg w-full">
+        <h1 className="text-4xl font-bold mb-6 text-purple-400">HighPower DApp</h1>
+        <p className="text-gray-300 mb-8">Conéctate a tu billetera y explora el mundo blockchain.</p>
+
+        {!isConnected ? (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-semibold mb-4">¡Conectar billetera!</h2>
+            {connectors.map((connector) => (
+              <button
+                key={connector.uid}
+                onClick={() => connect({ connector, chainId: bscTestnet.id })}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 ease-in-out transform hover:scale-105"
+                type="button"
+              >
+                {connector.name}
+                {pendingConnector?.id === connector.id && ' (Conectando...)'}
+              </button>
+            ))}
+          </div>
         ) : (
-          <div className="flex flex-col space-y-2">
-            {connectors.map((connector) => {
-              // Lógica mejorada para determinar si el conector está "listo"
-              const isActuallyReady = (
-                // Para MetaMask o conectores inyectados, usamos nuestra detección manual
-                (connector.id === 'metaMaskSDK' || connector.id === 'injected') ? isManualMetaMaskReady : connector.ready
-              );
+          <div className="space-y-6">
+            <h2 className="text-3xl font-bold text-green-400">¡Conectado!</h2>
+            <div className="bg-gray-700 p-4 rounded-lg">
+              <p className="text-gray-400 text-sm">Dirección de la Billetera:</p>
+              <p className="font-mono text-lg break-all">{address}</p>
+            </div>
+            {/* Display balance correctly */}
+            <div className="bg-gray-700 p-4 rounded-lg">
+              <p className="text-gray-400 text-sm">Balance ({balanceData?.symbol || 'Cargando'}):</p>
+              <p className="font-mono text-lg">{balanceData ? formatEther(balanceData.value) : 'Cargando...'}</p>
+            </div>
+            <div className="bg-gray-700 p-4 rounded-lg">
+              <p className="text-gray-400 text-sm">Red conectada:</p>
+              <p className="font-mono text-lg">{chain?.name || 'Desconocida'}</p>
+            </div>
+            {/* Mostrar el balance de NFTs */}
+            <div className="bg-gray-700 p-4 rounded-lg">
+                <p className="text-gray-400 text-sm">Tu balance de NFTs:</p>
+                {isLoadingNftBalance ? (
+                    <p className="font-mono text-lg">Cargando...</p>
+                ) : nftBalanceError ? (
+                    <p className="font-mono text-red-400">Error al cargar NFTs: {nftBalanceError.message}</p>
+                ) : (
+                    <p className="font-mono text-lg">{nftBalance !== undefined ? nftBalance.toString() : 'N/A'}</p>
+                )}
+            </div>
 
-              const isDisabled = !isActuallyReady || isConnecting || isConnectingLocally;
+            <button
+              onClick={() => disconnect()}
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 ease-in-out transform hover:scale-105"
+              type="button"
+            >
+              Desconectar
+            </button>
 
-              return (
-                <button
-                  key={connector.id}
-                  onClick={() => handleConnectClick(connector)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={isDisabled}
-                >
-                  {isConnecting || (isConnectingLocally && connector.id === pendingConnector?.id)
-                    ? 'Conectando...'
-                    : `Conectar con ${connector.name} (Ready: ${String(isActuallyReady)})`}
-                </button>
-              );
-            })}
-            {error && <p className="text-red-500 mt-2 text-center">Error: {error.message}</p>}
+            {/* NFT Minting Section */}
+            <div className="mt-8 pt-6 border-t border-gray-700">
+              <h3 className="text-2xl font-semibold mb-4 text-blue-400">Acuñar NFT</h3>
+              <div className="mb-4">
+                <label htmlFor="tokenURI" className="block text-gray-300 text-sm font-bold mb-2">
+                  URI del Token (ej. IPFS hash/URL):
+                </label>
+                <input
+                  type="text"
+                  id="tokenURI"
+                  value={tokenURI}
+                  onChange={(e) => setTokenURI(e.target.value)}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 leading-tight focus:outline-none focus:shadow-outline bg-gray-200"
+                  placeholder="ipfs://Qme..."
+                />
+              </div>
+              <button
+                onClick={handleMintNFT}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 ease-in-out transform hover:scale-105"
+                type="button"
+                disabled={isMinting || isConfirming}
+              >
+                {isMinting ? 'Acuñando...' : isConfirming ? 'Confirmando...' : 'Acuñar NFT'}
+              </button>
+
+              {hash && (
+                <p className="mt-4 text-sm text-gray-300">
+                  Transacción enviada: <a href={`https://testnet.bscscan.com/tx/${hash}`} target="_blank" rel="noopener noreferrer" className="text-blue-300 underline break-all">Ver en BSCScan (Testnet)</a>
+                </p>
+              )}
+              {confirmError && <p className="mt-2 text-red-500 font-semibold">Error al confirmar la acuñación: {confirmError.message}</p>}
+            </div>
           </div>
         )}
+
+        <p className="mt-10 text-gray-500 text-sm">© 2025 HighPower DApp. Todos los derechos reservados.</p>
       </div>
-
-      {/* Sección de acuñación de NFT */}
-      {isConnected && (
-        <div className="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-md mt-8">
-          <h2 className="text-3xl font-semibold mb-6 text-center text-blue-400">
-            Acuñar NFT HighPower
-          </h2>
-
-          <div className="mb-4">
-            <label htmlFor="nftUri" className="block text-gray-400 text-sm font-bold mb-2">
-              URI de Metadatos del NFT:
-            </label>
-            <input
-              type="text"
-              id="nftUri"
-              value={nftTokenURI}
-              onChange={(e) => setNftTokenURI(e.target.value)}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600"
-              placeholder="ej., ipfs://QmZ4Y9pMv2oW2f7v8k3f3h3g3d3c3b3a3c3e3f3g3h3i3j3k3l3m3n3o3p3q3r3s3t3u3v3w3x3y3y3z"
-              disabled={isMintingNFT}
-            />
-             <p className="text-xs text-gray-500 mt-1">
-                Esta URI debe apuntar a un archivo JSON de metadatos (como los de OpenSea) que contenga la imagen del NFT y otras propiedades.
-            </p>
-          </div>
-
-          <button
-            onClick={handleMintNFT}
-            disabled={!mintNftConfig?.request || isMintingNFT || isMintingNFTTx}
-            className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed text-lg"
-          >
-            {isMintingNFT || isMintingNFTTx ? 'Acuñando NFT...' : 'Acuñar NFT'}
-          </button>
-
-          {nftMintingMessage && (
-            <p className={`mt-4 text-center text-lg ${nftMintingMessage.startsWith('Error') ? 'text-red-500' : 'text-green-400'}`}>
-              {nftMintingMessage}
-            </p>
-          )}
-
-          {simulateMintNftError && (
-            <p className="mt-2 text-sm text-red-400 text-center">
-              Error de preparación (simulación): {simulateMintNftError.message}
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Sección de gestión de tokens BEP-20 (HGP) */}
-      {isConnected && (
-        <div className="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-md mt-8">
-          <h2 className="text-3xl font-semibold mb-6 text-center text-blue-400">
-            Gestionar Tokens HGP (BEP-20)
-          </h2>
-          {isHGPBalanceLoading ? (
-            <p className="text-center text-gray-400">Cargando balance de HGP...</p>
-          ) : (
-            hgpBalance !== undefined ? (
-              <p className="text-center text-lg text-green-400">
-                Tu balance de HGP: <span className="font-bold">{Number(hgpBalance) / (10**18)}</span> HGP
-              </p>
-            ) : (
-              <p className="text-center text-red-400">
-                No se pudo cargar el balance de HGP. Asegúrate de que el contrato sea correcto.
-              </p>
-            )
-          )}
-        </div>
-      )}
     </div>
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <WagmiConfig config={config}>
+        <AppContent />
+      </WagmiConfig>
+    </QueryClientProvider>
+  );
+}

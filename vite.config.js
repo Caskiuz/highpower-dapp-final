@@ -1,11 +1,18 @@
+// vite.config.js
 import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react'; // Asegúrate de que esta línea esté presente
+import react from '@vitejs/plugin-react';
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  // <<-- ¡¡SE HA ELIMINADO LA SECCIÓN 'esbuild'!! -->>
-  // El plugin @vitejs/plugin-react debería manejar el JSX por sí mismo.
-  // Esbuild es usado internamente por Vite, y esta configuración explícita
-  // a veces puede generar conflictos o ser redundante en versiones específicas.
+  optimizeDeps: {
+    // Aquí incluimos explícitamente todos los módulos relacionados con @tanstack/query
+    // para asegurar que Vite los pre-optimiza correctamente y resuelve sus dependencias.
+    include: [
+      '@tanstack/react-query',
+      '@tanstack/react-query-persist-client',
+      '@tanstack/query-sync-storage-persister', // <--- ¡Añadido aquí!
+    ],
+    // Asegúrate de que 'exclude' no contenga esta dependencia
+    // exclude: [], // Si existe, asegúrate de que no excluya los paquetes de tanstack
+  },
 });
