@@ -1,18 +1,29 @@
-/* Directivas de Tailwind CSS */
+/* Directivas de Tailwind CSS, aseguran que los estilos de Tailwind se inyecten correctamente */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* Estilos globales para asegurar que el fondo oscuro de Tailwind se aplique a toda la página */
-html, body, #root {
-  height: 100%; /* Asegura que ocupen toda la altura de la ventana */
-  margin: 0; /* Elimina cualquier margen predeterminado del navegador */
-  padding: 0; /* Elimina cualquier padding predeterminado */
+html {
+  /* Habilita el desplazamiento suave al navegar a anclas (#) en la página */
+  scroll-behavior: smooth;
+  /* Establece la familia de fuente global a 'Inter' y un fallback genérico */
+  font-family: "Inter", sans-serif;
+  /* Asegura que el html ocupe toda la altura de la ventana */
+  height: 100%;
+}
+
+body, #root {
+  /* Asegura que el cuerpo y el div raíz ocupen toda la altura de la ventana */
+  height: 100%;
+  /* Elimina cualquier margen predeterminado del navegador */
+  margin: 0;
+  /* Elimina cualquier padding predeterminado */
+  padding: 0;
   /* Aunque Tailwind añade bg-gray-900 a un div, forzamos un color de fondo para la seguridad visual */
   background-color: #1a202c; /* Un gris oscuro, similar al bg-gray-900 de Tailwind */
-  color: #ffffff; /* Texto blanco predeterminado */
+  /* Color de texto blanco predeterminado para todo el cuerpo */
+  color: #ffffff;
 }
 
 /* Puedes añadir más estilos base aquí si es necesario */
-
-

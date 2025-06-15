@@ -15,6 +15,9 @@ import { bsc, bscTestnet, mainnet, sepolia } from 'wagmi/chains';
 import { injected, walletConnect, coinbaseWallet } from '@wagmi/connectors';
 import { formatEther } from 'viem';
 
+// Importa el nuevo componente CursorTrail
+import CursorTrail from './components/CursorTrail';
+
 // Configuración de Wagmi con persistencia en localStorage
 const config = createConfig({
   chains: [mainnet, sepolia, bsc, bscTestnet],
@@ -32,7 +35,7 @@ const config = createConfig({
     [bsc.id]: http(),
     [bscTestnet.id]: http(),
   },
-  storage: localStorage, // Uso directo de localStorage
+  storage: localStorage,
 });
 
 // ABI de la función mint de su contrato MyNFT
@@ -102,7 +105,6 @@ function CustomModal({ message, onClose }) {
 function Navbar({ onNavigate, isConnected, disconnect, address }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Define las rutas y sus nombres amigables
   const navItems = [
     { name: 'Dashboard', path: 'dashboard' },
     { name: 'Acerca de HighPower', path: 'about' },
@@ -144,10 +146,10 @@ function Navbar({ onNavigate, isConnected, disconnect, address }) {
             {navItems.map((item) => (
               <a
                 key={item.path}
-                href="#"
+                href={`#${item.path}`} // Enlaces ancla para desplazamiento suave
                 onClick={() => {
                   onNavigate(item.path);
-                  setIsMenuOpen(false); // Cierra el menú en móvil al navegar
+                  setIsMenuOpen(false);
                 }}
                 className="block mt-4 lg:inline-block lg:mt-0 text-gray-300 hover:text-white px-4 py-2 rounded-lg transition duration-300 ease-in-out hover:bg-gray-700 mx-2"
               >
@@ -176,11 +178,12 @@ function Navbar({ onNavigate, isConnected, disconnect, address }) {
 
 // ==========================================================
 // SECCIONES DEL DASHBOARD
+// Cada sección ahora tiene un ID para el desplazamiento suave.
 // ==========================================================
 
 function DashboardSection({ address, balanceData, nftBalance, isLoadingNftBalance, nftBalanceError, isConnected, connect, connectors, pendingConnector, onNavigate }) {
   return (
-    <div className="p-6 bg-gray-800 rounded-lg shadow-xl text-center flex flex-col items-center justify-center min-h-[400px]">
+    <section id="dashboard" className="p-6 bg-gray-800 rounded-lg shadow-xl text-center flex flex-col items-center justify-center min-h-[400px]">
       <h2 className="text-5xl font-bold mb-8 text-purple-400">Dashboard HighPower</h2>
       {!isConnected ? (
         <div className="space-y-4 w-full max-w-sm">
@@ -191,6 +194,7 @@ function DashboardSection({ address, balanceData, nftBalance, isLoadingNftBalanc
               onClick={() => connect({ connector, chainId: bscTestnet.id })}
               className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 text-xl"
               type="button"
+              disabled={pendingConnector?.id === connector.id} // <-- Deshabilita el botón mientras se conecta
             >
               {connector.name}
               {pendingConnector?.id === connector.id && ' (Conectando...)'}
@@ -248,13 +252,13 @@ function DashboardSection({ address, balanceData, nftBalance, isLoadingNftBalanc
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 }
 
 function AboutSection() {
   return (
-    <div className="p-8 bg-gray-800 rounded-lg shadow-xl space-y-6">
+    <section id="about" className="p-8 bg-gray-800 rounded-lg shadow-xl space-y-6">
       <h2 className="text-4xl font-bold text-purple-400 mb-6">Acerca de HighPower: Elevando la Cultura Altcoin</h2>
 
       <section>
@@ -280,13 +284,13 @@ function AboutSection() {
           <strong className="text-purple-300">Misión:</strong> Construir una plataforma descentralizada y robusta que democratice la creación, el intercambio y la monetización de altcoins como activos digitales. Nos enfocamos en ofrecer herramientas intuitivas a la comunidad, mecanismos de rendimiento transparentes y un modelo de autofinanciamiento que asegure la longevidad y el impacto positivo del proyecto.
         </p>
       </section>
-    </div>
+    </section>
   );
 }
 
 function TokenomicsSection() {
   return (
-    <div className="p-8 bg-gray-800 rounded-lg shadow-xl space-y-6">
+    <section id="token" className="p-8 bg-gray-800 rounded-lg shadow-xl space-y-6">
       <h2 className="text-4xl font-bold text-purple-400 mb-6">El Token $HGP y su Economía</h2>
 
       <section>
@@ -331,13 +335,13 @@ function TokenomicsSection() {
           <li><strong>Quema por Actividad del Marketplace:</strong> Un porcentaje (ej. 25-50%) de las tarifas del Marketplace de NFTs.</li>
         </ul>
       </section>
-    </div>
+    </section>
   );
 }
 
 function YieldMechanismsSection() {
   return (
-    <div className="p-8 bg-gray-800 rounded-lg shadow-xl space-y-6">
+    <section id="yield" className="p-8 bg-gray-800 rounded-lg shadow-xl space-y-6">
       <h2 className="text-4xl font-bold text-purple-400 mb-6">Mecanismos de Rendimiento HighPower</h2>
 
       <section>
@@ -368,11 +372,11 @@ function YieldMechanismsSection() {
           <li><strong>Recompensas de Incentivo para LP (Liquidity Providers):</strong> Recompensas adicionales en $HGP a los proveedores de liquidez externos.</li>
         </ul>
       </section>
-    </div>
+    </section>
   );
 }
 
-function NftGallerySection({ isConnected, writeContract, isMinting, isConfirming, hash, confirmError, showCustomModal, refetchNftBalance }) {
+function NftGallerySection({ isConnected, writeContract, isMinting, isConfirming, hash, confirmError, showCustomModal, refetchNftBalance, isConfirmed }) {
   const [tokenURI, setTokenURI] = useState('');
 
   const handleMintNFT = async () => {
@@ -403,29 +407,19 @@ function NftGallerySection({ isConnected, writeContract, isMinting, isConfirming
   };
 
   useEffect(() => {
-    if (isConfirming && !isMinting && !hash && !confirmError) {
-      // Este es un estado donde la transacción está siendo procesada, pero no hay un hash aún.
-      // Opcional: Mostrar un mensaje diferente para 'esperando confirmación' si es necesario.
-    }
-    if (isConfirming && !isMinting && hash && !confirmError) {
-      // Transacción enviada, esperando confirmación
-      showCustomModal('Transacción enviada. Esperando confirmación de la red...');
-    }
-    if (!isConfirming && !isMinting && hash && !confirmError) {
-      // Transacción confirmada (éxito)
+    if (isConfirmed) { // Solo si la transacción es exitosa
       refetchNftBalance(); // Vuelve a leer el balance después de una acuñación exitosa
       showCustomModal('¡NFT acuñado con éxito! Tu balance se ha actualizado.');
       setTokenURI(''); // Limpia el campo de entrada
-    }
-    if (confirmError) {
-      // Error en la confirmación
+    } else if (confirmError) { // Si hay un error en la confirmación
       showCustomModal(`Error al confirmar la acuñación: ${confirmError.message}. Por favor, verifica tu transacción en el explorador de bloques.`);
     }
-  }, [isConfirming, isMinting, hash, confirmError, refetchNftBalance, showCustomModal]);
+    // No mostramos modal para 'isMinting' o 'isConfirming' aquí, ya que el estado del botón lo maneja.
+  }, [isConfirmed, confirmError, refetchNftBalance, showCustomModal]);
 
 
   return (
-    <div className="p-8 bg-gray-800 rounded-lg shadow-xl space-y-6">
+    <section id="nfts" className="p-8 bg-gray-800 rounded-lg shadow-xl space-y-6">
       <h2 className="text-4xl font-bold text-purple-400 mb-6">Galería de NFT y Marketplace</h2>
 
       <section>
@@ -476,13 +470,13 @@ function NftGallerySection({ isConnected, writeContract, isMinting, isConfirming
         )}
         {confirmError && <p className="mt-2 text-red-500 font-semibold">Error al confirmar la acuñación: {confirmError.message}</p>}
       </section>
-    </div>
+    </section>
   );
 }
 
 function SwapSection() {
   return (
-    <div className="p-8 bg-gray-800 rounded-lg shadow-xl space-y-6">
+    <section id="swap" className="p-8 bg-gray-800 rounded-lg shadow-xl space-y-6">
       <h2 className="text-4xl font-bold text-purple-400 mb-6">Swap (Intercambio en la Web)</h2>
 
       <section>
@@ -539,13 +533,13 @@ function SwapSection() {
           </div>
         </div>
       </section>
-    </div>
+    </section>
   );
 }
 
 function DaoSection() {
   return (
-    <div className="p-8 bg-gray-800 rounded-lg shadow-xl space-y-6">
+    <section id="dao" className="p-8 bg-gray-800 rounded-lg shadow-xl space-y-6">
       <h2 className="text-4xl font-bold text-purple-400 mb-6">Gobernanza Descentralizada (DAO)</h2>
 
       <section>
@@ -588,13 +582,13 @@ function DaoSection() {
           </div>
         </div>
       </section>
-    </div>
+    </section>
   );
 }
 
 function RoadmapSection() {
   return (
-    <div className="p-8 bg-gray-800 rounded-lg shadow-xl space-y-6">
+    <section id="roadmap" className="p-8 bg-gray-800 rounded-lg shadow-xl space-y-6">
       <h2 className="text-4xl font-bold text-purple-400 mb-6">Roadmap de HighPower</h2>
 
       <section>
@@ -680,13 +674,13 @@ function RoadmapSection() {
           </div>
         </div>
       </section>
-    </div>
+    </section>
   );
 }
 
 function TechStackSection() {
   return (
-    <div className="p-8 bg-gray-800 rounded-lg shadow-xl space-y-6">
+    <section id="tech" className="p-8 bg-gray-800 rounded-lg shadow-xl space-y-6">
       <h2 className="text-4xl font-bold text-purple-400 mb-6">Arquitectura e Implementación Tecnológica</h2>
 
       <section>
@@ -754,13 +748,13 @@ function TechStackSection() {
           <li><strong>Transparencia Financiera:</strong> Publicación regular de informes.</li>
         </ul>
       </section>
-    </div>
+    </section>
   );
 }
 
 function ContactSection() {
   return (
-    <div className="p-8 bg-gray-800 rounded-lg shadow-xl space-y-6 text-center">
+    <section id="contact" className="p-8 bg-gray-800 rounded-lg shadow-xl space-y-6 text-center">
       <h2 className="text-4xl font-bold text-purple-400 mb-6">Contacto y Redes Sociales</h2>
 
       <section>
@@ -801,13 +795,13 @@ function ContactSection() {
           El compromiso con la seguridad es primordial para HighPower. Garantizar la integridad y la seguridad de los contratos inteligentes y la plataforma en su totalidad. Se realizarán auditorías de seguridad exhaustivas por parte de empresas de renombre antes del lanzamiento de cualquier componente crítico y de forma periódica.
         </p>
       </section>
-    </div>
+    </section>
   );
 }
 
 
 // ==========================================================
-// COMPONENTE PRINCIPAL DE LA APLICACIÓN
+// COMPONENTE PRINCIPAL DE LA APLICACIÓN (AppContent y App)
 // ==========================================================
 function AppContent() {
   const { address, isConnected, chain } = useAccount();
@@ -846,16 +840,6 @@ function AppContent() {
     setMessage('');
   };
 
-  // Efecto para mostrar el modal de confirmación de minting
-  useEffect(() => {
-    if (isConfirmed) {
-      refetchNftBalance(); // Vuelve a leer el balance después de una acuñación exitosa
-      showCustomModal('¡NFT acuñado con éxito! Tu balance se ha actualizado.');
-    } else if (confirmError) {
-      showCustomModal(`Error al confirmar la acuñación: ${confirmError.message}`);
-    }
-  }, [isConfirmed, confirmError, refetchNftBalance]);
-
   // Función para renderizar la sección actual
   const renderSection = () => {
     switch (currentSection) {
@@ -891,6 +875,7 @@ function AppContent() {
             confirmError={confirmError}
             showCustomModal={showCustomModal}
             refetchNftBalance={refetchNftBalance}
+            isConfirmed={isConfirmed}
           />
         );
       case 'swap':
@@ -923,6 +908,9 @@ function AppContent() {
     <div className="min-h-screen bg-gray-900 text-white flex flex-col font-inter">
       {/* Modal personalizado */}
       {showModal && <CustomModal message={message} onClose={closeModal} />}
+
+      {/* Cursor Trail - ¡Añadido aquí! */}
+      <CursorTrail />
 
       {/* Navbar siempre visible */}
       <Navbar
