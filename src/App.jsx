@@ -10,39 +10,11 @@ import {
   useWaitForTransactionReceipt,
   useBalance,
   useReadContract,
+  createStorage, // <--- CAMBIO AQUÍ: Importamos createStorage directamente de 'wagmi'
 } from 'wagmi';
 import { bsc, bscTestnet, mainnet, sepolia } from 'wagmi/chains';
 import { injected, walletConnect, coinbaseWallet } from '@wagmi/connectors';
 import { formatEther } from 'viem';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { persistQueryClient } from '@tanstack/react-query-persist-client';
-import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
-
-
-// Crear una instancia de QueryClient
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: Infinity, // Mantener los datos "frescos" indefinidamente
-      gcTime: 1000 * 60 * 60 * 24, // Mantener los datos en caché por 24 horas (ajustable)
-    },
-  },
-});
-
-// Crear un persister para localStorage
-// Aseguramos que window.localStorage esté disponible antes de usarlo.
-const persister = createSyncStoragePersister({
-  storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-  key: 'wagmi.persister.highpower-dapp', // Clave única para tu aplicación en localStorage
-});
-
-// Persistir el cliente de consulta al almacenamiento local
-// Esto se encarga de que Wagmi (que usa React Query internamente)
-// mantenga el estado de la conexión de la billetera.
-persistQueryClient({
-  queryClient,
-  persister,
-});
 
 // 1. Wagmi Configuration
 const config = createConfig({
@@ -53,7 +25,7 @@ const config = createConfig({
       appName: 'HighPower DApp',
       preference: 'smartWalletOnly',
     }),
-    walletConnect({ projectId: '56246e8df9c9151e77b7e93def28838e' }), // Su ID de Proyecto actualizado
+    walletConnect({ projectId: '56246e8df9c9151e77b7e93def28838e' }), // Su ID de Proyecto
   ],
   transports: {
     [mainnet.id]: http(),
@@ -61,12 +33,12 @@ const config = createConfig({
     [bsc.id]: http(),
     [bscTestnet.id]: http(),
   },
-  // La persistencia ahora es manejada exclusivamente por persistQueryClient y QueryClientProvider.
+  // Configuración de persistencia para Wagmi
+  // Le pasamos localStorage directamente a createStorage
+  storage: createStorage({ storage: localStorage }),
 });
 
 // ABI de la función mint de su contrato MyNFT
-// Esta ABI corresponde a la función: function mint(string memory tokenURI_) public returns (uint256)
-// También incluye balanceOf para leer el balance de NFTs.
 const nftContractAbi = [
   {
     "inputs": [
@@ -84,7 +56,7 @@ const nftContractAbi = [
         "type": "uint256"
       }
     ],
-    "stateMutability": "nonpayable", // Su ABI indica que es nonpayable
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -298,10 +270,8 @@ function AppContent() {
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <WagmiConfig config={config}>
-        <AppContent />
-      </WagmiConfig>
-    </QueryClientProvider>
+    <WagmiConfig config={config}>
+      <AppContent />
+    </WagmiConfig>
   );
 }
