@@ -20,6 +20,8 @@ import SimpleTokenABI from './abis/SimpleToken.json';
 import CursorTrail from './components/CursorTrail';
 import CustomModal from './components/CustomModal';
 import Navbar from './components/Navbar'; 
+import Sidebar from './components/Sidebar'; // <-- NUEVA IMPORTACIÓN
+import HomePage from './sections/HomePage'; 
 import DashboardSection from './sections/DashboardSection';
 import AboutSection from './sections/AboutSection';
 import TokenomicsSection from './sections/TokenomicsSection';
@@ -38,6 +40,8 @@ const HGP_STAKING_ADDRESS = '0x3D4E5F6A7B8C9D0E1F2A3B4C5D6E7F8A9B0C1D2E';
 
 
 function AppContent() {
+  const [currentSection, setCurrentSection] = useState('home'); 
+
   const { address, isConnected, chain } = useAccount();
   const { data: balanceData } = useBalance({
     address: address,
@@ -108,7 +112,6 @@ function AppContent() {
     hash: hash,
   });
 
-  const [currentSection, setCurrentSection] = useState('dashboard');
   const [message, setMessage] = useState('');
   const [showModal, setShowModal] = useState(false);
 
@@ -137,7 +140,11 @@ function AppContent() {
     }
   }, [isConnected, address, refetchHGPBalance, refetchNftBalance]);
 
-  const renderSection = () => {
+  const handleLaunchDapp = useCallback(() => {
+    setCurrentSection('dashboard');
+  }, []);
+
+  const renderCurrentSection = () => {
     const decimals = hgpDecimalsData !== undefined ? Number(hgpDecimalsData) : 18;
     const formattedHgpBalance = hgpTokenBalanceData !== undefined ? formatUnits(hgpTokenBalanceData, decimals) : '0.0';
     const formattedTotalHGPSupply = hgpTotalSupplyData !== undefined ? formatUnits(hgpTotalSupplyData, decimals) : 'Cargando...';
@@ -171,7 +178,7 @@ function AppContent() {
       case 'tokenomics':
         return <TokenomicsSection />;
       case 'yield':
-        return <YieldMechanismsSection />;
+        return <YieldMechanismsSection {...commonSectionProps} />; // Pasa commonSectionProps para que YieldSection pueda usar onNavigate si lo necesita
       case 'nfts':
         return <NftGallerySection {...commonSectionProps} />;
       case 'swap':
@@ -195,26 +202,37 @@ function AppContent() {
 
       <CursorTrail />
 
-      <Navbar
-        onNavigate={setCurrentSection}
-        isConnected={isConnected}
-        disconnect={disconnect}
-        address={address}
-        balanceData={balanceData}
-        hgpBalance={hgpTokenBalanceData !== undefined && hgpDecimalsData !== undefined ? formatUnits(hgpTokenBalanceData, Number(hgpDecimalsData)) : '0.0'}
-        connect={connect}
-        connectors={connectors}
-        pendingConnector={pendingConnector}
-      />
+      {currentSection === 'home' ? (
+        <HomePage onLaunchDapp={handleLaunchDapp} />
+      ) : (
+        <>
+          {/* Barra Superior */}
+          <Navbar
+            isConnected={isConnected}
+            address={address}
+            balanceData={balanceData}
+            hgpBalance={hgpTokenBalanceData !== undefined && hgpDecimalsData !== undefined ? formatUnits(hgpTokenBalanceData, Number(hgpDecimalsData)) : '0.0'}
+            connect={connect}
+            connectors={connectors}
+            pendingConnector={pendingConnector}
+          />
+          
+          {/* Layout principal: Sidebar a la izquierda y Contenido Principal a la derecha */}
+          <div className="flex flex-1 pt-[72px]"> {/* pt-[72px] es la altura de la Navbar */}
+            {/* Sidebar Lateral */}
+            <Sidebar onNavigate={setCurrentSection} currentSection={currentSection} />
 
-      {/* CAMBIO CLAVE AQUÍ: Añadimos padding-top al main para evitar que el contenido se oculte bajo el Navbar fijo */}
-      <main className="flex-grow container mx-auto p-4 py-8 pt-28"> 
-        {renderSection()}
-      </main>
+            {/* Área de Contenido Principal: Ocupa el resto del espacio horizontal */}
+            <main className="flex-grow p-4 md:p-6 lg:p-8 ml-20 lg:ml-24"> {/* ml-20/ml-24 es el ancho del sidebar */}
+              {renderCurrentSection()}
+            </main>
+          </div>
 
-      <footer className="bg-gray-900 shadow-inner p-6 text-center text-gray-300 text-sm mt-8 border-t border-purple-700">
-        <p>© 2025 HighPower DApp. Todos los derechos reservados.</p>
-      </footer>
+          <footer className="bg-gray-900 shadow-inner p-6 text-center text-gray-300 text-sm border-t border-purple-700 ml-20 lg:ml-24"> {/* Footer también debe ajustarse al ancho del sidebar */}
+            <p>© 2025 HighPower DApp. Todos los derechos reservados.</p>
+          </footer>
+        </>
+      )}
     </div>
   );
 }
