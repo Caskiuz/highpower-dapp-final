@@ -20,7 +20,7 @@ import SimpleTokenABI from './abis/SimpleToken.json';
 import CursorTrail from './components/CursorTrail';
 import CustomModal from './components/CustomModal';
 import Navbar from './components/Navbar'; 
-import Sidebar from './components/Sidebar'; // <-- NUEVA IMPORTACIÓN
+import Sidebar from './components/Sidebar'; 
 import HomePage from './sections/HomePage'; 
 import DashboardSection from './sections/DashboardSection';
 import AboutSection from './sections/AboutSection';
@@ -32,6 +32,11 @@ import DaoSection from './sections/DaoSection';
 import RoadmapSection from './sections/RoadmapSection';
 import TechStackSection from './sections/TechStackSection';
 import ContactSection from './sections/ContactSection';
+// NUEVAS IMPORTACIONES DE SECCIONES (Placeholder)
+import IncubationSection from './sections/IncubationSection';
+// import LibrarySection from './sections/LibrarySection'; // <-- Ya no se importa, reemplazada por Whitepaper
+import WhitepaperSection from './sections/WhitepaperSection'; // <-- NUEVA IMPORTACIÓN
+import SupportSection from './sections/SupportSection';
 
 // --- Constantes de Contratos ---
 const HGP_ERC20_ADDRESS = '0x03Fd2cE62B4BB54f09716f9588A5E13bC0756773'; 
@@ -173,18 +178,27 @@ function AppContent() {
     switch (currentSection) {
       case 'dashboard':
         return <DashboardSection {...commonSectionProps} />;
+      case 'incubation':
+        return <IncubationSection />;
+      case 'yield':
+        return <YieldMechanismsSection {...commonSectionProps} />;
+      case 'nfts':
+        return <NftGallerySection {...commonSectionProps} />;
+      case 'dao':
+        return <DaoSection />;
+      case 'whitepaper': // <-- NUEVO CASO para Whitepaper
+        return <WhitepaperSection />;
+      case 'support':
+        return <SupportSection />;
+      // Las secciones 'about', 'tokenomics', 'swap', 'roadmap', 'tech', 'contact' ya no están en el sidebar principal de PixelRealm
+      // Si las necesitas accesibles, podrías considerar un menú secundario o incluirlas en alguna sección.
+      // Por ahora, se mantienen aquí para que el código no falle si se accede por URL directa.
       case 'about':
         return <AboutSection />;
       case 'tokenomics':
         return <TokenomicsSection />;
-      case 'yield':
-        return <YieldMechanismsSection {...commonSectionProps} />; // Pasa commonSectionProps para que YieldSection pueda usar onNavigate si lo necesita
-      case 'nfts':
-        return <NftGallerySection {...commonSectionProps} />;
       case 'swap':
         return <SwapSection />;
-      case 'dao':
-        return <DaoSection />;
       case 'roadmap':
         return <RoadmapSection />;
       case 'tech':
@@ -218,17 +232,19 @@ function AppContent() {
           />
           
           {/* Layout principal: Sidebar a la izquierda y Contenido Principal a la derecha */}
-          <div className="flex flex-1 pt-[72px]"> {/* pt-[72px] es la altura de la Navbar */}
+          {/* pt-[72px] es la altura de la Navbar */}
+          <div className="flex flex-1 pt-[72px]"> 
             {/* Sidebar Lateral */}
             <Sidebar onNavigate={setCurrentSection} currentSection={currentSection} />
 
             {/* Área de Contenido Principal: Ocupa el resto del espacio horizontal */}
-            <main className="flex-grow p-4 md:p-6 lg:p-8 ml-20 lg:ml-24"> {/* ml-20/ml-24 es el ancho del sidebar */}
+            {/* ml-20/ml-24 es el ancho del sidebar */}
+            <main className="flex-grow p-4 md:p-6 lg:p-8 ml-20 lg:ml-24"> 
               {renderCurrentSection()}
             </main>
           </div>
 
-          <footer className="bg-gray-900 shadow-inner p-6 text-center text-gray-300 text-sm border-t border-purple-700 ml-20 lg:ml-24"> {/* Footer también debe ajustarse al ancho del sidebar */}
+          <footer className="bg-gray-900 shadow-inner p-6 text-center text-gray-300 text-sm border-t border-purple-700 ml-20 lg:ml-24"> 
             <p>© 2025 HighPower DApp. Todos los derechos reservados.</p>
           </footer>
         </>
