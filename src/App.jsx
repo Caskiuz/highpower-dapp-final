@@ -210,12 +210,15 @@ function AppContent() {
     setCurrentSection('news-announcements'); 
   }, []);
 
-  const renderCurrentSection = () => {
-    const decimals = hgpDecimalsData !== undefined ? Number(hgpDecimalsData) : 18;
-    const formattedHgpBalance = hgpTokenBalanceData !== undefined ? formatUnits(hgpTokenBalanceData, decimals) : '0.0';
-    const formattedTotalHGPSupply = hgpTotalSupplyData !== undefined ? formatUnits(hgpTotalSupplyData, decimals) : 'Cargando...';
-    const formattedNftCount = nftBalanceData !== undefined ? nftBalanceData.toString() : '0';
+  // Mover la definición de estas variables al ámbito superior de AppContent
+  const decimals = hgpDecimalsData !== undefined ? Number(hgpDecimalsData) : 18;
+  const formattedHgpBalance = hgpTokenBalanceData !== undefined ? formatUnits(hgpTokenBalanceData, decimals) : '0.0';
+  const formattedTotalHGPSupply = hgpTotalSupplyData !== undefined ? formatUnits(hgpTotalSupplyData, decimals) : 'Cargando...';
+  const formattedNftCount = nftBalanceData !== undefined ? nftBalanceData.toString() : '0';
 
+
+  const renderCurrentSection = () => {
+    // Estas variables ya están definidas en el ámbito superior, no se necesita re-declarar aquí.
     const commonSectionProps = {
       isConnected,
       onNavigate: setCurrentSection,
@@ -322,9 +325,10 @@ function AppContent() {
           {/* Barra Superior */}
           <Navbar
             isConnected={isConnected}
-            address={address}
+            address={address} 
             balanceData={balanceData}
-            hgpBalance={hgpTokenBalanceData !== undefined && hgpDecimalsData !== undefined ? formatUnits(hgpTokenBalanceData, Number(hgpDecimalsData)) : '0.0'}
+            hgpBalance={formattedHgpBalance} // Usar la variable formateada directamente
+            nftCount={formattedNftCount} // Usar la variable formateada directamente
             connect={connect}
             connectors={connectors}
             pendingConnector={pendingConnector}
