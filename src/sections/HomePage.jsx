@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef } from 'react';
 
 function HomePage({ onLaunchDapp }) {
   // Enlace de Discord - ¡IMPORTANTE: Reemplázalo con tu enlace de invitación real!
-  const discordInviteLink = "https://discord.gg/YOUR_DISCORD_INVITE"; 
+  const discordInviteLink = "https://discord.gg/BG8u3tUC"; 
 
   // Estado para controlar la animación de entrada del contenido principal
   const [showContent, setShowContent] = useState(false);
