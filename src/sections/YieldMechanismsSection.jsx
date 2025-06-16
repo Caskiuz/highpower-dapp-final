@@ -215,7 +215,7 @@ function YieldMechanismsSection({
       }, 3000);
     } catch (error) {
       console.error("Error al reclamar recompensas LP simuladas:", error);
-      showCustomodal(`Error al reclamar recompensas LP: ${error.message || "Transacción rechazada."}`);
+      showCustomModal(`Error al reclamar recompensas LP: ${error.message || "Transacción rechazada."}`);
     }
   }, [isConnected, address, lpRewards, showCustomModal, mockClaimRewards]);
 
@@ -387,34 +387,109 @@ function YieldMechanismsSection({
         </>
       )}
 
-      {/* Infografía Animada de Mecanismos de Rendimiento Placeholder */}
+      {/* Infografía Animada de Mecanismos de Rendimiento */}
       <div className="bg-gray-800 p-6 rounded-3xl shadow-xl border border-[var(--primary-purple)]">
         <h3 className="text-3xl font-bold text-[var(--off-white)] mb-6">Mecanismos de Rendimiento en Acción</h3>
-        <p className="text-[var(--light-gray-text)] mb-4">
+        <p className="text-[var(--light-gray-text)] mb-8">
           Visualiza cómo tus activos crecen a través de nuestros innovadores mecanismos de Staking y Farming.
         </p>
-        <div className="relative w-full h-80 bg-gray-900 rounded-lg flex items-center justify-center overflow-hidden">
-          {/* Placeholder para la infografía animada */}
-          <div className="absolute inset-0 flex items-center justify-center text-gray-600 text-xl font-bold animate-pulse">
-            [Infografía Animada de Mecanismos de Rendimiento - PRÓXIMAMENTE]
-          </div>
-          {/* Ejemplo de animación de partículas de fondo (simple) */}
-          <style>{`
-            @keyframes yieldFlowPulse {
-              0% { box-shadow: 0 0 15px var(--accent-green); }
-              50% { box-shadow: 0 0 30px var(--accent-yellow); }
-              100% { box-shadow: 0 0 15px var(--accent-green); }
-            }
-            .yield-flow-pulse {
-              animation: yieldFlowPulse 3s infinite ease-in-out;
-            }
-          `}</style>
-          <div className="absolute w-24 h-24 rounded-full bg-[var(--accent-green)] opacity-20 yield-flow-pulse"></div>
-          <div className="absolute w-16 h-16 rounded-full bg-[var(--accent-yellow)] opacity-20 yield-flow-pulse" style={{ animationDelay: '1s' }}></div>
-          <div className="absolute w-12 h-12 rounded-full bg-[var(--primary-purple)] opacity-20 yield-flow-pulse" style={{ animationDelay: '2s' }}></div>
+        <div className="relative w-full h-96 bg-gray-900 rounded-lg flex items-center justify-center overflow-hidden">
+          {/* Contenedor SVG para la infografía animada */}
+          <svg className="absolute inset-0 w-full h-full" viewBox="0 0 800 400">
+            {/* Fondo gradiente sutil */}
+            <defs>
+              <linearGradient id="yieldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style={{stopColor: 'var(--primary-purple)', stopOpacity: 0.8}} />
+                <stop offset="50%" style={{stopColor: 'var(--secondary-blue)', stopOpacity: 0.8}} />
+                <stop offset="100%" style={{stopColor: 'var(--accent-green)', stopOpacity: 0.8}} />
+              </linearGradient>
+            </defs>
+            <rect x="0" y="0" width="800" height="400" fill="url(#yieldGradient)" opacity="0.1" />
+
+            {/* Iconos centrales */}
+            <circle cx="200" cy="200" r="40" fill="var(--primary-purple)" opacity="0.9" stroke="var(--off-white)" strokeWidth="2" />
+            <text x="200" y="205" textAnchor="middle" fill="white" fontSize="16" fontWeight="bold">Tus Activos</text>
+
+            <circle cx="600" cy="200" r="40" fill="var(--accent-green)" opacity="0.9" stroke="var(--off-white)" strokeWidth="2" />
+            <text x="600" y="205" textAnchor="middle" fill="white" fontSize="16" fontWeight="bold">Recompensas</text>
+
+            {/* Pool de Staking/Farming */}
+            <rect x="300" y="150" width="200" height="100" rx="15" ry="15" fill="var(--dark-gray)" stroke="var(--secondary-blue)" strokeWidth="3" opacity="0.9" />
+            <text x="400" y="200" textAnchor="middle" fill="var(--light-gray-text)" fontSize="18" fontWeight="bold">Pool de Rendimiento</text>
+
+            {/* Animación de Flujo: Activos al Pool */}
+            <path id="path1" d="M240 200 H300" stroke="var(--primary-purple)" strokeWidth="4" fill="none" opacity="0.7">
+              <animateMotion
+                path="M240 200 H300"
+                dur="2s"
+                repeatCount="indefinite"
+                rotate="auto"
+                begin="0s"
+              >
+                <mpath href="#path1" />
+              </animateMotion>
+            </path>
+            <circle r="8" fill="var(--accent-yellow)">
+              <animateMotion
+                path="M240 200 H300"
+                dur="2s"
+                repeatCount="indefinite"
+                rotate="auto"
+                begin="0s"
+              />
+            </circle>
+
+            {/* Animación de Flujo: Pool a Recompensas */}
+            <path id="path2" d="M500 200 H560" stroke="var(--accent-green)" strokeWidth="4" fill="none" opacity="0.7">
+              <animateMotion
+                path="M500 200 H560"
+                dur="2s"
+                repeatCount="indefinite"
+                rotate="auto"
+                begin="1s"
+              >
+                <mpath href="#path2" />
+              </animateMotion>
+            </path>
+            <circle r="8" fill="var(--accent-yellow)">
+              <animateMotion
+                path="M500 200 H560"
+                dur="2s"
+                repeatCount="indefinite"
+                rotate="auto"
+                begin="1s"
+              />
+            </circle>
+
+            {/* Pequeñas partículas de flujo alrededor del pool */}
+            {Array.from({ length: 15 }).map((_, i) => (
+              <circle key={i} r="3" fill="white" opacity="0.5">
+                <animateMotion
+                  path={`M${350 + Math.random() * 100} ${170 + Math.random() * 60} Q${400 + Math.random() * 50} ${100 + Math.random() * 200}, ${450 + Math.random() * 100} ${170 + Math.random() * 60}`}
+                  dur={`${2 + Math.random() * 2}s`}
+                  repeatCount="indefinite"
+                  rotate="auto"
+                  begin={`${Math.random() * 2}s`}
+                />
+              </circle>
+            ))}
+
+            {/* Leyenda */}
+            <g transform="translate(10, 360)">
+              <rect x="0" y="0" width="180" height="30" fill="rgba(0,0,0,0.5)" rx="5" ry="5" />
+              <rect x="5" y="8" width="10" height="10" fill="var(--primary-purple)" />
+              <text x="20" y="17" fill="white" fontSize="12">Activos Depositados</text>
+            </g>
+            <g transform="translate(200, 360)">
+              <rect x="0" y="0" width="160" height="30" fill="rgba(0,0,0,0.5)" rx="5" ry="5" />
+              <rect x="5" y="8" width="10" height="10" fill="var(--accent-green)" />
+              <text x="20" y="17" fill="white" fontSize="12">Recompensas Generadas</text>
+            </g>
+
+          </svg>
         </div>
         <p className="text-gray-500 text-sm mt-4">
-          *Esta sección se actualizará con una infografía interactiva para ilustrar el flujo de recompensas.
+          *Esta infografía ilustra el flujo de activos y recompensas en el ecosistema HighPower.
         </p>
       </div>
     </section>

@@ -64,7 +64,6 @@ function NftGallerySection({
       console.log("Transacción de acuñación simulada enviada:", tx.hash);
       showCustomModal(`Transacción enviada: ${tx.hash.substring(0, 10)}... Confirmando...`);
 
-      // Simular la confirmación de la transacción
       setTimeout(() => {
         showCustomModal("¡NFT acuñado con éxito! (Simulado)");
         // Simular que el usuario ahora tiene 1 NFT más
@@ -277,35 +276,147 @@ function NftGallerySection({
         </div>
       )}
 
-      {/* Flujo de Valor de NFTs (Infografía Animada Placeholder) */}
+      {/* Infografía Animada de Flujo de Valor de NFTs */}
       <div className="bg-gray-800 p-6 rounded-3xl shadow-xl border border-[var(--primary-purple)]">
         <h3 className="text-3xl font-bold text-[var(--off-white)] mb-6">Flujo de Valor en el Ecosistema NFT</h3>
-        <p className="text-[var(--light-gray-text)] mb-4">
-          Descubre cómo las tarifas del marketplace y las interacciones con NFTs generan valor para el ecosistema y los holders.
+        <p className="text-[var(--light-gray-text)] mb-8">
+          Descubre cómo las interacciones con NFTs generan valor para los creadores, compradores y el ecosistema HighPower.
         </p>
-        <div className="relative w-full h-80 bg-gray-900 rounded-lg flex items-center justify-center overflow-hidden">
-          {/* Placeholder para la infografía animada */}
-          <div className="absolute inset-0 flex items-center justify-center text-gray-600 text-xl font-bold animate-pulse">
-            [Infografía Animada de Flujo de Valor NFT - PRÓXIMAMENTE]
-          </div>
-          {/* Puedes añadir SVG o elementos Canvas aquí para la animación */}
-          {/* Ejemplo de animación de partículas de fondo (simple) */}
-          <style>{`
-            @keyframes nftFlowPulse {
-              0% { box-shadow: 0 0 15px var(--primary-purple); }
-              50% { box-shadow: 0 0 30px var(--secondary-blue); }
-              100% { box-shadow: 0 0 15px var(--primary-purple); }
-            }
-            .nft-flow-pulse {
-              animation: nftFlowPulse 3s infinite ease-in-out;
-            }
-          `}</style>
-          <div className="absolute w-24 h-24 rounded-full bg-[var(--primary-purple)] opacity-20 nft-flow-pulse"></div>
-          <div className="absolute w-16 h-16 rounded-full bg-[var(--secondary-blue)] opacity-20 nft-flow-pulse" style={{ animationDelay: '1s' }}></div>
-          <div className="absolute w-12 h-12 rounded-full bg-[var(--accent-green)] opacity-20 nft-flow-pulse" style={{ animationDelay: '2s' }}></div>
+        <div className="relative w-full h-96 bg-gray-900 rounded-lg flex items-center justify-center overflow-hidden">
+          <svg className="absolute inset-0 w-full h-full" viewBox="0 0 800 400">
+            {/* Fondo gradiente sutil */}
+            <defs>
+              <linearGradient id="nftGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style={{stopColor: 'var(--primary-purple)', stopOpacity: 0.8}} />
+                <stop offset="50%" style={{stopColor: 'var(--accent-yellow)', stopOpacity: 0.8}} />
+                <stop offset="100%" style={{stopColor: 'var(--secondary-blue)', stopOpacity: 0.8}} />
+              </linearGradient>
+            </defs>
+            <rect x="0" y="0" width="800" height="400" fill="url(#nftGradient)" opacity="0.1" />
+
+            {/* Nodos principales */}
+            <rect x="50" y="150" width="120" height="100" rx="15" ry="15" fill="var(--secondary-blue)" opacity="0.9" stroke="var(--off-white)" strokeWidth="2" />
+            <text x="110" y="200" textAnchor="middle" fill="white" fontSize="16" fontWeight="bold">Creador/Minteo</text>
+
+            <rect x="340" y="150" width="120" height="100" rx="15" ry="15" fill="var(--primary-purple)" opacity="0.9" stroke="var(--off-white)" strokeWidth="2" />
+            <text x="400" y="200" textAnchor="middle" fill="white" fontSize="16" fontWeight="bold">Marketplace</text>
+
+            <rect x="630" y="150" width="120" height="100" rx="15" ry="15" fill="var(--accent-green)" opacity="0.9" stroke="var(--off-white)" strokeWidth="2" />
+            <text x="690" y="200" textAnchor="middle" fill="white" fontSize="16" fontWeight="bold">Comprador/Holder</text>
+
+            <circle cx="400" cy="350" r="30" fill="var(--accent-yellow)" opacity="0.9" stroke="var(--off-white)" strokeWidth="2" />
+            <text x="400" y="355" textAnchor="middle" fill="var(--dark-gray)" fontSize="14" fontWeight="bold">Tesorería/Quema</text>
+
+
+            {/* Flujo: Creador/Minteo -> Marketplace */}
+            <path id="nftPath1" d="M170 200 H340" stroke="var(--primary-purple)" strokeWidth="4" fill="none" opacity="0.7">
+              <animateMotion
+                path="M170 200 H340"
+                dur="3s"
+                repeatCount="indefinite"
+                rotate="auto"
+                begin="0s"
+              >
+                <mpath href="#nftPath1" />
+              </animateMotion>
+            </path>
+            <circle r="8" fill="var(--off-white)">
+              <animateMotion
+                path="M170 200 H340"
+                dur="3s"
+                repeatCount="indefinite"
+                rotate="auto"
+                begin="0s"
+              />
+            </circle>
+
+            {/* Flujo: Marketplace -> Comprador/Holder */}
+            <path id="nftPath2" d="M460 200 H630" stroke="var(--accent-green)" strokeWidth="4" fill="none" opacity="0.7">
+              <animateMotion
+                path="M460 200 H630"
+                dur="3s"
+                repeatCount="indefinite"
+                rotate="auto"
+                begin="1s"
+              >
+                <mpath href="#nftPath2" />
+              </animateMotion>
+            </path>
+            <circle r="8" fill="var(--off-white)">
+              <animateMotion
+                path="M460 200 H630"
+                dur="3s"
+                repeatCount="indefinite"
+                rotate="auto"
+                begin="1s"
+              />
+            </circle>
+
+            {/* Flujo: Marketplace -> Tesorería/Quema (Tarifas) */}
+            <path id="nftPath3" d="M400 250 V320" stroke="var(--accent-yellow)" strokeWidth="4" fill="none" opacity="0.7">
+              <animateMotion
+                path="M400 250 V320"
+                dur="2.5s"
+                repeatCount="indefinite"
+                rotate="auto"
+                begin="0.5s"
+              >
+                <mpath href="#nftPath3" />
+              </animateMotion>
+            </path>
+            <circle r="8" fill="var(--off-white)">
+              <animateMotion
+                path="M400 250 V320"
+                dur="2.5s"
+                repeatCount="indefinite"
+                rotate="auto"
+                begin="0.5s"
+              />
+            </circle>
+
+            {/* Flujo: Comprador/Holder -> Marketplace (Reventa) */}
+            <path id="nftPath4" d="M690 150 C750 100, 750 0, 400 0 C50 0, 50 100, 110 150 L340 150" stroke="var(--light-gray-text)" strokeWidth="2" fill="none" opacity="0.5" strokeDasharray="5,5">
+              <animateMotion
+                path="M690 150 C750 100, 750 0, 400 0 C50 0, 50 100, 110 150 L340 150"
+                dur="8s"
+                repeatCount="indefinite"
+                rotate="auto"
+                begin="2s"
+              >
+                <mpath href="#nftPath4" />
+              </animateMotion>
+            </path>
+            <circle r="6" fill="var(--accent-yellow)">
+              <animateMotion
+                path="M690 150 C750 100, 750 0, 400 0 C50 0, 50 100, 110 150 L340 150"
+                dur="8s"
+                repeatCount="indefinite"
+                rotate="auto"
+                begin="2s"
+              />
+            </circle>
+
+            {/* Leyenda */}
+            <g transform="translate(10, 10)">
+              <rect x="0" y="0" width="180" height="30" fill="rgba(0,0,0,0.5)" rx="5" ry="5" />
+              <rect x="5" y="8" width="10" height="10" fill="var(--primary-purple)" />
+              <text x="20" y="17" fill="white" fontSize="12">Minteo / Listado</text>
+            </g>
+            <g transform="translate(10, 50)">
+              <rect x="0" y="0" width="180" height="30" fill="rgba(0,0,0,0.5)" rx="5" ry="5" />
+              <rect x="5" y="8" width="10" height="10" fill="var(--accent-green)" />
+              <text x="20" y="17" fill="white" fontSize="12">Compra / Holding</text>
+            </g>
+            <g transform="translate(10, 90)">
+              <rect x="0" y="0" width="180" height="30" fill="rgba(0,0,0,0.5)" rx="5" ry="5" />
+              <rect x="5" y="8" width="10" height="10" fill="var(--accent-yellow)" />
+              <text x="20" y="17" fill="white" fontSize="12">Tarifas / Quemas</text>
+            </g>
+
+          </svg>
         </div>
         <p className="text-gray-500 text-sm mt-4">
-          *Esta sección se actualizará con una infografía interactiva para ilustrar el ciclo económico de los NFTs.
+          *Esta infografía ilustra el ciclo de vida y el flujo de valor de los NFTs dentro del ecosistema HighPower.
         </p>
       </div>
     </section>

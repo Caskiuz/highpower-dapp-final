@@ -2,66 +2,83 @@
 import React, { useState } from 'react';
 
 function FAQSection() {
-  const faqs = [
+  // Estado para controlar qué pregunta está expandida
+  const [expandedQuestion, setExpandedQuestion] = useState(null);
+
+  const faqItems = [
     {
-      question: "¿Qué es HighPower DApp?",
-      answer: "HighPower es un ecosistema Web3 innovador en la BNB Smart Chain que combina tokenomics ($HGP), NFTs únicos, mecanismos de rendimiento (staking, farming) y gobernanza descentralizada para construir una economía sostenible."
+      id: 1,
+      question: '¿Qué es HighPower DApp ($HGP)?',
+      answer: 'HighPower (HGP) es un ecosistema Web3 innovador construido sobre la BNB Smart Chain. Fusiona la cultura altcoin con funcionalidades DeFi robustas y una vibrante economía de Tokens No Fungibles (NFTs) para ofrecer utilidad real a los usuarios.'
     },
     {
-      question: "¿Cómo puedo adquirir tokens $HGP?",
-      answer: "Puedes adquirir tokens $HGP a través de nuestro módulo de Swap integrado una vez que conectes tu billetera, o en DEXs listados como PancakeSwap."
+      id: 2,
+      question: '¿Cómo puedo obtener tokens $HGP?',
+      answer: 'Actualmente, puedes obtener tokens $HGP participando en nuestra preventa (próximamente) o a través de exchanges descentralizados (DEX) como PancakeSwap una vez que el token sea listado. Te recomendamos mantenerte atento a nuestros anuncios para el lanzamiento oficial.'
     },
     {
-      question: "¿Qué tipos de rendimientos ofrece HighPower?",
-      answer: "Ofrecemos pools de Staking para $HGP, oportunidades de Liquidity Mining (Farming) y staking de NFTs, todos diseñados para maximizar tus activos."
+      id: 3,
+      question: '¿Qué tipo de NFTs se ofrecerán en el Metamarket?',
+      answer: 'Nuestro Metamarket ofrecerá una variedad de NFTs coleccionables únicos relacionados con la cultura altcoin y el ecosistema HighPower. También habrá colecciones oficiales con utilidades especiales dentro de la DApp (ej. beneficios de staking, acceso exclusivo).'
     },
     {
-      question: "¿Qué son los NFTs de HighPower?",
-      answer: "Los NFTs de HighPower son activos digitales únicos, desde coleccionables de arte hasta activos con utilidad dentro del ecosistema, que puedes mintear, comprar y vender en nuestro Metamarket."
+      id: 4,
+      question: '¿Cómo funciona el staking de $HGP?',
+      answer: 'Puedes bloquear tus tokens $HGP en nuestro contrato de staking por períodos definidos para generar recompensas pasivas. Las recompensas se acumulan con el tiempo y pueden reclamarse en la sección "Recompensas" de la DApp.'
     },
     {
-      question: "¿Cómo funciona la Gobernanza DAO?",
-      answer: "Los holders de tokens $HGP tienen el poder de votar en propuestas clave sobre el desarrollo y la dirección del proyecto, asegurando que la comunidad tenga voz y voto en el futuro de HighPower."
+      id: 5,
+      question: '¿Qué es la Gobernanza DAO de HighPower?',
+      answer: 'La Gobernanza DAO (Organización Autónoma Descentralizada) permite a los holders de tokens $HGP votar en propuestas clave sobre el desarrollo, la tesorería y la dirección futura del proyecto, asegurando un control descentralizado y comunitario.'
     },
     {
-      question: "¿Es seguro invertir en HighPower?",
-      answer: "La seguridad es nuestra prioridad. Todos nuestros contratos inteligentes serán auditados por firmas de seguridad de renombre, y seguimos las mejores prácticas de desarrollo Web3. Siempre investiga por tu cuenta antes de invertir."
+      id: 6,
+      question: '¿Cómo puedo reportar un error o sugerir una mejora?',
+      answer: 'Puedes utilizar nuestro formulario de contacto en la sección "Contacto" o unirte a nuestro servidor de Discord para interactuar directamente con el equipo y la comunidad. Valoramos mucho tu feedback.'
+    },
+    {
+      id: 7,
+      question: '¿Cuándo se realizarán las auditorías de seguridad?',
+      answer: 'La seguridad es primordial. Todos los contratos inteligentes críticos serán sometidos a auditorías exhaustivas por firmas de seguridad de blockchain de renombre antes de su despliegue en mainnet y en cada actualización importante. Los informes se publicarán en la sección "Auditorías".'
     }
   ];
 
-  const [openIndex, setOpenIndex] = useState(null); // Estado para controlar qué FAQ está abierto
-
-  const toggleFAQ = (index) => {
-    setOpenIndex(openIndex === index ? null : index); // Cierra si ya está abierto, abre si está cerrado
+  const toggleQuestion = (id) => {
+    setExpandedQuestion(expandedQuestion === id ? null : id);
   };
 
   return (
-    <section id="faq" className="p-8 bg-[var(--dark-gray)] rounded-3xl shadow-xl space-y-6 text-left border-2 border-[var(--primary-purple)]">
-      <h2 className="text-4xl font-bold text-[var(--accent-yellow)] mb-6 text-center">Preguntas Frecuentes (FAQ)</h2>
-      <p className="text-[var(--light-gray-text)] text-lg text-center">
-        Encuentra respuestas rápidas a las preguntas más comunes sobre HighPower DApp, sus funcionalidades y su ecosistema.
+    <section id="faq" className="p-8 bg-[var(--dark-gray)] rounded-3xl shadow-xl space-y-8 text-center border-2 border-[var(--accent-yellow)]">
+      <h2 className="text-4xl font-bold text-[var(--accent-yellow)] mb-6">Preguntas Frecuentes (FAQ)</h2>
+      <p className="text-[var(--light-gray-text)] text-lg mb-8">
+        Encuentra respuestas rápidas a las preguntas más comunes sobre HighPower DApp.
       </p>
-      <div className="mt-8 space-y-4">
-        {faqs.map((faq, index) => (
-          <div key={index} className="bg-gray-800 rounded-lg shadow-md border border-gray-700 overflow-hidden">
+
+      <div className="bg-gray-800 p-6 rounded-3xl shadow-xl border border-[var(--primary-purple)]">
+        {faqItems.map(item => (
+          <div key={item.id} className="mb-4 last:mb-0 border-b border-gray-700 pb-4">
             <button
-              className="flex justify-between items-center w-full p-5 text-xl font-semibold text-[var(--off-white)] hover:bg-gray-700 transition-colors duration-200"
-              onClick={() => toggleFAQ(index)}
+              className="flex justify-between items-center w-full text-left focus:outline-none py-2"
+              onClick={() => toggleQuestion(item.id)}
             >
-              {faq.question}
-              <i className={`fas ${openIndex === index ? 'fa-minus' : 'fa-plus'} text-purple-400`}></i>
+              <h3 className="text-xl font-semibold text-[var(--off-white)]">
+                {item.question}
+              </h3>
+              <i className={`fas ${expandedQuestion === item.id ? 'fa-chevron-up' : 'fa-chevron-down'} text-gray-400 text-lg transition-transform duration-300`}></i>
             </button>
-            {openIndex === index && (
-              <div className="p-5 border-t border-gray-700 bg-gray-900 text-gray-400">
-                <p>{faq.answer}</p>
-              </div>
-            )}
+            <div
+              className={`overflow-hidden transition-all duration-500 ease-in-out
+                          ${expandedQuestion === item.id ? 'max-h-96 opacity-100 mt-2' : 'max-h-0 opacity-0'}`}
+            >
+              <p className="text-gray-400 text-base leading-relaxed pl-4">{item.answer}</p>
+            </div>
           </div>
         ))}
       </div>
-      <div className="mt-8 text-gray-500 text-sm text-center">
-        ¿No encuentras lo que buscas? Visita nuestra sección de Soporte o únete a nuestra comunidad.
-      </div>
+
+      <p className="text-gray-500 text-sm mt-8">
+        ¿No encuentras tu respuesta? ¡No dudes en contactarnos directamente!
+      </p>
     </section>
   );
 }
