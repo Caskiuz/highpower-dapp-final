@@ -1,7 +1,7 @@
 // src/sections/DashboardSection.jsx
 import React from 'react';
 import { formatEther } from 'viem';
-import InteractiveCards from '../components/InteractiveCards'; // Importa el nuevo componente
+import InteractiveCards from '../components/InteractiveCards'; // Importa el componente de tarjetas interactivas
 
 function DashboardSection({ address, balanceData, hgpBalance, nftCount, isConnected, onNavigate, totalHGPSupply }) {
   return (
@@ -19,21 +19,27 @@ function DashboardSection({ address, balanceData, hgpBalance, nftCount, isConnec
         <div className="space-y-8 w-full"> {/* Espaciado general */}
           <h2 className="text-5xl font-bold text-[var(--accent-yellow)] drop-shadow-lg mb-8">¡Bienvenido al Dashboard HighPower!</h2>
           
-          {/* Sección de Balances - Más concisa y destacada */}
+          {/* Sección de Balances y Métricas Clave - Más detallada y con iconos */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-gradient-to-br from-[var(--primary-purple)] to-[var(--secondary-blue)] p-6 rounded-2xl shadow-lg border border-[var(--accent-green)]">
+            {/* Balance BNB/ETH */}
+            <div className="bg-gradient-to-br from-[var(--primary-purple)] to-[var(--secondary-blue)] p-6 rounded-2xl shadow-lg border border-[var(--accent-green)] flex flex-col items-center">
+              <i className="fas fa-wallet text-4xl text-[var(--off-white)] mb-3"></i>
               <h3 className="text-xl font-semibold text-[var(--off-white)] mb-2">Tu Balance BNB/ETH</h3>
               <p className="text-3xl font-bold text-[var(--accent-yellow)]">
                 {balanceData ? `${formatEther(balanceData.value).substring(0, Math.min(formatEther(balanceData.value).length, 8))} ${balanceData.symbol}` : 'Cargando...'}
               </p>
             </div>
-            <div className="bg-gradient-to-br from-[var(--secondary-blue)] to-[var(--primary-purple)] p-6 rounded-2xl shadow-lg border border-[var(--accent-yellow)]">
+            {/* Saldo $HGP */}
+            <div className="bg-gradient-to-br from-[var(--secondary-blue)] to-[var(--primary-purple)] p-6 rounded-2xl shadow-lg border border-[var(--accent-yellow)] flex flex-col items-center">
+              <i className="fas fa-coins text-4xl text-[var(--off-white)] mb-3"></i>
               <h3 className="text-xl font-semibold text-[var(--off-white)] mb-2">Tu Saldo $HGP</h3>
               <p className="text-3xl font-bold text-[var(--accent-yellow)]">
                 {hgpBalance} HGP
               </p>
             </div>
-            <div className="bg-gradient-to-br from-[var(--primary-purple)] to-[var(--secondary-blue)] p-6 rounded-2xl shadow-lg border border-[var(--secondary-blue)]">
+            {/* Tus NFTs HighPower */}
+            <div className="bg-gradient-to-br from-[var(--primary-purple)] to-[var(--secondary-blue)] p-6 rounded-2xl shadow-lg border border-[var(--secondary-blue)] flex flex-col items-center">
+              <i className="fas fa-image text-4xl text-[var(--off-white)] mb-3"></i>
               <h3 className="text-xl font-semibold text-[var(--off-white)] mb-2">Tus NFTs HighPower</h3>
               <p className="text-3xl font-bold text-[var(--accent-green)]">
                 {nftCount} NFTs
@@ -41,7 +47,7 @@ function DashboardSection({ address, balanceData, hgpBalance, nftCount, isConnec
             </div>
           </div>
 
-          {/* Nueva Sección Interactiva de Llamadas a la Acción */}
+          {/* Nueva Sección Interactiva de Llamadas a la Acción - Más destacada */}
           <div className="bg-gray-800 p-6 rounded-3xl shadow-xl border border-blue-500 mb-8">
             <h3 className="text-4xl font-bold text-[var(--accent-green)] mb-6 text-left">
               Explora Oportunidades en HighPower
@@ -65,15 +71,37 @@ function DashboardSection({ address, balanceData, hgpBalance, nftCount, isConnec
             </button>
           </div>
 
-          {/* Estado General del Ecosistema - Puede ser un módulo más pequeño si es necesario */}
-          <div className="bg-[var(--primary-purple)] p-6 rounded-2xl shadow-md border border-[var(--accent-green)] mt-8">
-            <p className="text-[var(--light-gray-text)] text-lg mb-2 font-semibold">Estado General del Ecosistema:</p>
-            <ul className="list-disc list-inside text-left text-[var(--off-white)] text-md space-y-2">
-              <li><strong>Suministro Total $HGP:</strong> {totalHGPSupply} HGP</li>
-              <li><strong>Volumen de Trading (24h):</strong> $PENDIENTE_CONECTAR_API</li>
-              <li><strong>Liquidez Total Bloqueada (TVL):</strong> $PENDIENTE_CONECTAR_API</li>
-              <li><strong>Último NFT acuñado:</strong> #PENDIENTE_CONECTAR_API</li>
-            </ul>
+          {/* Estado General del Ecosistema - Ahora es un panel de métricas más completo */}
+          <div className="bg-gray-800 p-6 rounded-3xl shadow-xl border border-[var(--primary-purple)] mt-8">
+            <h3 className="text-4xl font-bold text-[var(--primary-purple)] mb-6 text-left">
+              Métricas del Ecosistema
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-left">
+              <div className="bg-gray-900 p-4 rounded-lg border border-gray-700">
+                <p className="text-gray-400 text-sm">Suministro Total $HGP:</p>
+                <p className="text-xl font-bold text-[var(--off-white)]">{totalHGPSupply} HGP</p>
+              </div>
+              <div className="bg-gray-900 p-4 rounded-lg border border-gray-700">
+                <p className="text-gray-400 text-sm">Total Value Locked (TVL):</p>
+                <p className="text-xl font-bold text-[var(--off-white)]">$PENDIENTE_CONECTAR_API</p>
+              </div>
+              <div className="bg-gray-900 p-4 rounded-lg border border-gray-700">
+                <p className="text-gray-400 text-sm">Volumen de Trading (24h):</p>
+                <p className="text-xl font-bold text-[var(--off-white)]">$PENDIENTE_CONECTAR_API</p>
+              </div>
+              <div className="bg-gray-900 p-4 rounded-lg border border-gray-700">
+                <p className="text-gray-400 text-sm">NFTs Minteados:</p>
+                <p className="text-xl font-bold text-[var(--off-white)]">PENDIENTE_CONECTAR_API</p>
+              </div>
+              <div className="bg-gray-900 p-4 rounded-lg border border-gray-700">
+                <p className="text-gray-400 text-sm">Holders de $HGP:</p>
+                <p className="text-xl font-bold text-[var(--off-white)]">PENDIENTE_CONECTAR_API</p>
+              </div>
+              <div className="bg-gray-900 p-4 rounded-lg border border-gray-700">
+                <p className="text-gray-400 text-sm">Propuestas DAO Activas:</p>
+                <p className="text-xl font-bold text-[var(--off-white)]">PENDIENTE_CONECTAR_API</p>
+              </div>
+            </div>
           </div>
         </div>
       )}

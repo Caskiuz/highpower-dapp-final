@@ -29,13 +29,20 @@ import YieldMechanismsSection from './sections/YieldMechanismsSection';
 import NftGallerySection from './sections/NftGallerySection';
 import SwapSection from './sections/SwapSection';
 import DaoSection from './sections/DaoSection';
-import RoadmapSection from './sections/RoadmapSection'; // <-- YA ESTABA IMPORTADO
+import RoadmapSection from './sections/RoadmapSection'; 
 import TechStackSection from './sections/TechStackSection';
 import ContactSection from './sections/ContactSection';
-// Secciones placeholder
-// import IncubationSection from './sections/IncubationSection'; // <-- ELIMINADO: Ya no está en el sidebar
 import WhitepaperSection from './sections/WhitepaperSection'; 
 import SupportSection from './sections/SupportSection';
+// NUEVAS IMPORTACIONES DE SECCIONES AÑADIDAS
+import AuditSecuritySection from './sections/AuditSecuritySection';
+import PartnersEcosystemSection from './sections/PartnersEcosystemSection';
+import TeamSection from './sections/TeamSection';
+import FAQSection from './sections/FAQSection';
+import NewsAnnouncementsSection from './sections/NewsAnnouncementsSection';
+// Importa la sección Incubation de nuevo por si se usa en algún sitio (aunque no esté en sidebar)
+import IncubationSection from './sections/IncubationSection';
+
 
 // --- Constantes de Contratos ---
 const HGP_ERC20_ADDRESS = '0x03Fd2cE62B4BB54f09716f9588A5E13bC0756773'; 
@@ -45,6 +52,8 @@ const HGP_STAKING_ADDRESS = '0x3D4E5F6A7B8C9D0E1F2A3B4C5D6E7F8A9B0C1D2E';
 
 function AppContent() {
   const [currentSection, setCurrentSection] = useState('home'); 
+  // Estado para controlar si el sidebar está expandido (para ajustar el main content)
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
 
   const { address, isConnected, chain } = useAccount();
   const { data: balanceData } = useBalance({
@@ -177,31 +186,40 @@ function AppContent() {
     switch (currentSection) {
       case 'dashboard':
         return <DashboardSection {...commonSectionProps} />;
-      // case 'incubation': // <-- ELIMINADO: Ya no está en el sidebar
-      //   return <IncubationSection />; 
+      case 'roadmap':
+        return <RoadmapSection />;
       case 'yield':
         return <YieldMechanismsSection {...commonSectionProps} />;
       case 'nfts':
         return <NftGallerySection {...commonSectionProps} />;
       case 'dao':
         return <DaoSection />;
-      case 'roadmap': // <-- ESTE CASO ES EL QUE SE CONECTA AHORA DESDE EL SIDEBAR
-        return <RoadmapSection />;
       case 'whitepaper':
         return <WhitepaperSection />;
+      case 'audit-security':
+        return <AuditSecuritySection />;
+      case 'partners-ecosystem':
+        return <PartnersEcosystemSection />;
+      case 'team':
+        return <TeamSection />;
+      case 'faq':
+        return <FAQSection />;
+      case 'news-announcements':
+        return <NewsAnnouncementsSection />;
       case 'support':
         return <SupportSection />;
-      // Otras secciones que podrían no estar en el sidebar principal pero se mantienen por si se accede directamente
-      case 'about':
+      case 'about': // Añadido para que sea accesible
         return <AboutSection />;
-      case 'tokenomics':
+      case 'tokenomics': // Añadido para que sea accesible
         return <TokenomicsSection />;
-      case 'swap':
+      case 'swap': // Añadido para que sea accesible
         return <SwapSection />;
-      case 'tech':
+      case 'tech': // Añadido para que sea accesible
         return <TechStackSection />;
-      case 'contact':
+      case 'contact': // Añadido para que sea accesible
         return <ContactSection />;
+      case 'incubation': // Se mantiene para compatibilidad con la URL, aunque no esté en el sidebar
+        return <IncubationSection />;
       default:
         return <DashboardSection {...commonSectionProps} />;
     }
@@ -229,17 +247,22 @@ function AppContent() {
           />
           
           {/* Layout principal: Sidebar a la izquierda y Contenido Principal a la derecha */}
+          {/* pt-[72px] es la altura de la Navbar */}
           <div className="flex flex-1 pt-[72px]"> 
-            {/* Sidebar Lateral */}
-            <Sidebar onNavigate={setCurrentSection} currentSection={currentSection} />
+            {/* Sidebar Lateral - le pasamos la función para cambiar el estado de expansión */}
+            <Sidebar onNavigate={setCurrentSection} currentSection={currentSection} onExpandChange={setIsSidebarExpanded} />
 
             {/* Área de Contenido Principal: Ocupa el resto del espacio horizontal */}
-            <main className="flex-grow p-4 md:p-6 lg:p-8 ml-20 lg:ml-24"> 
+            {/* Margen izquierdo dinámico basado en si el sidebar está expandido */}
+            <main className={`flex-grow p-4 md:p-6 lg:p-8 transition-all duration-300 ease-in-out
+                              ${isSidebarExpanded ? 'ml-56 lg:ml-64' : 'ml-20 lg:ml-24'}`}> 
               {renderCurrentSection()}
             </main>
           </div>
 
-          <footer className="bg-gray-900 shadow-inner p-6 text-center text-gray-300 text-sm border-t border-purple-700 ml-20 lg:ml-24"> 
+          {/* Footer también con margen izquierdo dinámico */}
+          <footer className={`bg-gray-900 shadow-inner p-6 text-center text-gray-300 text-sm border-t border-purple-700 transition-all duration-300 ease-in-out
+                              ${isSidebarExpanded ? 'ml-56 lg:ml-64' : 'ml-20 lg:ml-24'}`}> 
             <p>© 2025 HighPower DApp. Todos los derechos reservados.</p>
           </footer>
         </>
