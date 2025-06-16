@@ -5,7 +5,7 @@ export default {
     "./src/**/*.{js,jsx}",
   ],
   theme: {
-    extend: {},
+    extend: {}, // Aquí NO se están extendiendo los colores de HighPower
   },
   plugins: [],
 }
