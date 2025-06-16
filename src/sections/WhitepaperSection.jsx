@@ -7,8 +7,8 @@ function WhitepaperSection() {
   const [loadingError, setLoadingError] = useState(false);
 
   useEffect(() => {
-    // Carga el archivo Markdown usando fetch
-    fetch('/src/whitepaper/HighPowerWhitepaper.md')
+    // CAMBIO CLAVE: La ruta ahora apunta a la carpeta public/
+    fetch('/whitepaper/HighPowerWhitepaper.md') 
       .then(response => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -22,7 +22,7 @@ function WhitepaperSection() {
         console.error("Error al cargar el Whitepaper:", error);
         setLoadingError(true);
       });
-  }, []); // Se ejecuta solo una vez al montar el componente
+  }, []); 
 
   return (
     <section id="whitepaper" className="p-8 bg-[var(--dark-gray)] rounded-3xl shadow-xl space-y-6 text-left border-2 border-[var(--primary-purple)]">
