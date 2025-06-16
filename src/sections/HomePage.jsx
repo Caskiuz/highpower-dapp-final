@@ -1,47 +1,39 @@
 // src/sections/HomePage.jsx
 import React, { useEffect, useState, useRef } from 'react';
 
-function HomePage({ onLaunchDapp }) {
-  // Enlace de Discord - ¡IMPORTANTE: Reemplázalo con tu enlace de invitación real!
-  const discordInviteLink = "https://discord.gg/BG8u3tUC"; 
+function HomePage({ onLaunchDapp, onShowVideo }) { // Recibe onShowVideo prop
+  const discordInviteLink = "https://discord.gg/YOUR_DISCORD_INVITE"; // <--- CAMBIA ESTA LÍNEA CON TU ENLACE REAL
 
-  // Estado para controlar la animación de entrada del contenido principal
   const [showContent, setShowContent] = useState(false);
-  // Referencia al elemento canvas
   const canvasRef = useRef(null);
 
   useEffect(() => {
-    // Activa la animación de entrada del contenido principal después de un pequeño retraso
     const contentTimer = setTimeout(() => {
       setShowContent(true);
     }, 500);
 
-    // --- Lógica del fondo animado con Canvas ---
     const canvas = canvasRef.current;
-    if (!canvas) return; // Salir si el canvas no está montado
+    if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
     let animationFrameId;
 
-    // Colores del tema para el fondo de blockchain
     const getCssVar = (name, fallback) => getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
 
     const colors = {
-      primaryPurple: getCssVar('--primary-purple', '#8A2BE2'),
-      secondaryBlue: getCssVar('--secondary-blue', '#4169E1'),
-      accentGreen: getCssVar('--accent-green', '#00FF7F'),
-      accentYellow: getCssVar('--accent-yellow', '#FFD700'),
-      lightGrayText: getCssVar('--light-gray-text', '#CCCCCC'),
-      offWhite: getCssVar('--off-white', '#F0F0F0'),
+      primaryPurple: getCssVar('--primary-purple', '#6B46C1'),
+      secondaryBlue: getCssVar('--secondary-blue', '#4299E1'),
+      accentGreen: getCssVar('--accent-green', '#6EE7B7'),
+      accentYellow: getCssVar('--accent-yellow', '#FBBF24'),
+      lightGrayText: getCssVar('--light-gray-text', '#CBD5E0'),
+      offWhite: getCssVar('--off-white', '#F7FAFC'),
     };
 
-    // Ajusta el tamaño del canvas a la ventana
     const resizeCanvas = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     };
 
-    // Clase para los nodos (bloques/hubs)
     class Node {
       constructor(x, y, radius, color, speed) {
         this.x = x;
@@ -80,7 +72,6 @@ function HomePage({ onLaunchDapp }) {
       }
     }
 
-    // Clase para las partículas (flujo de datos)
     class Particle {
       constructor(x, y, radius, color, speed) {
         this.x = x;
@@ -108,7 +99,6 @@ function HomePage({ onLaunchDapp }) {
       }
     }
 
-    // Clase: DataSphere (burbujas Web3/Crypto/Blockchain)
     class DataSphere {
       constructor(x, y, radius, color) {
         this.x = x;
@@ -149,7 +139,6 @@ function HomePage({ onLaunchDapp }) {
       }
     }
 
-    // Inicialización
     const nodes = [];
     const particles = [];
     const dataSpheres = []; 
@@ -159,7 +148,6 @@ function HomePage({ onLaunchDapp }) {
     const spawnParticleInterval = 30; 
     let lastSpawnTime = 0;
 
-    // Crear nodos
     const nodeColors = [colors.primaryPurple, colors.secondaryBlue, colors.accentGreen, colors.accentYellow];
     for (let i = 0; i < numNodes; i++) {
       const radius = 80 + Math.random() * 100;
@@ -168,7 +156,6 @@ function HomePage({ onLaunchDapp }) {
       nodes.push(new Node(x, y, radius, nodeColors[i % nodeColors.length], 0.25)); 
     }
 
-    // Crear esferas de datos iniciales
     for (let i = 0; i < numDataSpheres; i++) {
       const radius = 5 + Math.random() * 10;
       const x = Math.random() * canvas.width;
@@ -177,7 +164,6 @@ function HomePage({ onLaunchDapp }) {
       dataSpheres.push(new DataSphere(x, y, radius, sphereColors[Math.floor(Math.random() * sphereColors.length)]));
     }
 
-    // Función principal de animación
     const animate = (currentTime) => {
       animationFrameId = requestAnimationFrame(animate);
 
@@ -230,10 +216,8 @@ function HomePage({ onLaunchDapp }) {
       ctx.globalAlpha = 1; 
     };
 
-    // Event listeners
     window.addEventListener('resize', resizeCanvas);
 
-    // Iniciar
     resizeCanvas();
     animate(0); 
 
@@ -245,19 +229,14 @@ function HomePage({ onLaunchDapp }) {
   }, []); 
 
   return (
-    // Contenedor principal de la Home Page: ocupa toda la altura, centrado visualmente, ocultando desbordamiento
     <div className="relative flex flex-col min-h-screen text-center overflow-hidden bg-[var(--dark-gray)] font-sans">
       
-      {/* Canvas para el fondo animado */}
       <canvas ref={canvasRef} id="blockchain-background-canvas" className="absolute inset-0 w-full h-full"></canvas>
 
-      {/* Barra superior fija para el Logo y el botón "Iniciar aplicación" */}
       <div className="absolute top-0 left-0 w-full p-4 lg:px-8 z-20 flex justify-between items-center bg-transparent">
-        {/* Logo HighPower - Esquina superior izquierda */}
         <div className="text-purple-400 text-3xl font-bold rounded-lg p-2 transition duration-300 hover:bg-gray-800 cursor-pointer animate-fade-in delay-500">
           HighPower
         </div>
-        {/* Botón "Iniciar aplicación" - Esquina superior derecha */}
         <button
           onClick={onLaunchDapp}
           className="bg-[var(--accent-green)] hover:bg-[var(--secondary-blue)] text-gray-900 font-bold py-3 px-8 rounded-full text-xl
@@ -267,22 +246,16 @@ function HomePage({ onLaunchDapp }) {
         </button>
       </div>
 
-      {/* Contenido principal centrado: Título y botón "Únete a la comunidad" */}
-      {/* CAMBIOS AQUÍ: w-full y px-8 para más ancho, removidos estilos de "alumbrado" directo */}
       <div className={`relative z-10 p-8 w-full px-8 mx-auto flex flex-col items-center justify-center flex-grow
                       ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}
                       transition-all duration-1000 ease-out
                       bg-gray-900 bg-opacity-70 rounded-3xl shadow-2xl border border-purple-700`}>
-        {/* Título principal profesional y relevante, tamaño fijo y sin animaciones de texto individuales */}
-        {/* CAMBIOS AQUÍ: text-6xl fijo, sin responsive para este texto */}
         <h1 className="text-6xl font-extrabold text-[var(--off-white)] leading-tight drop-shadow-lg mb-8">
           <span className="text-[var(--accent-yellow)]">Potenciando</span> la <span className="text-[var(--accent-green)]">Economía Descentralizada</span>: <br/>
           Tu <span className="text-[var(--primary-purple)]">Ecosistema para Tokens</span>, <br/>
           <span className="text-[var(--secondary-blue)]">NFTs y Rendimientos Sostenibles</span>.
         </h1>
-        {/* Botón "Únete a la comunidad" - Centrado, ahora siempre en fila y tamaño ligeramente reducido */}
-        {/* CAMBIOS AQUÍ: flex-row siempre, espacio consistente, py y px reducidos */}
-        <div className="flex flex-row space-x-6 justify-center">
+        <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-6 justify-center">
           <a
             href={discordInviteLink}
             target="_blank"
@@ -290,15 +263,22 @@ function HomePage({ onLaunchDapp }) {
             className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-full text-xl
                        transition duration-300 ease-in-out transform hover:scale-105 shadow-xl animate-bounce-once flex items-center justify-center"
           >
-              <i className="fab fa-discord mr-3 text-2xl"></i> {/* Icono de Discord */}
+              <i className="fab fa-discord mr-3 text-2xl"></i>
               Únete a la comunidad
           </a>
+          {/* Nuevo botón para ver el video introductorio */}
+          <button
+            onClick={onShowVideo}
+            className="bg-[var(--secondary-blue)] hover:bg-[var(--primary-purple)] text-white font-bold py-3 px-8 rounded-full text-xl
+                       transition duration-300 ease-in-out transform hover:scale-105 shadow-xl flex items-center justify-center"
+          >
+            <i className="fas fa-video mr-3 text-2xl"></i> {/* Icono de video */}
+            Ver video introductorio
+          </button>
         </div>
       </div>
 
-      {/* Bloque de estilos CSS que aún se usan para el contenido y animaciones generales */}
       <style>{`
-        /* Animaciones generales de entrada de contenido */
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 1; }
@@ -313,7 +293,6 @@ function HomePage({ onLaunchDapp }) {
         .animate-fade-in.delay-1000 { animation-delay: 1s; }
         .animate-bounce-once { animation: bounceOnce 1s ease-in-out; }
 
-        /* Transición para el contenedor principal de texto */
         .transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 1000ms; }
       `}</style>
     </div>

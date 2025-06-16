@@ -2,32 +2,63 @@
 import React from 'react';
 
 function AuditSecuritySection() {
+  // Logos de firmas de auditoría simuladas (reemplaza con logos reales si tienes socios)
+  const auditFirms = [
+    { name: 'CertiK', logo: 'https://placehold.co/150x80/000000/FFFFFF?text=CertiK', link: '#' },
+    { name: 'PeckShield', logo: 'https://placehold.co/150x80/000000/FFFFFF?text=PeckShield', link: '#' },
+    { name: 'Hacken', logo: 'https://placehold.co/150x80/000000/FFFFFF?text=Hacken', link: '#' },
+    { name: 'SlowMist', logo: 'https://placehold.co/150x80/000000/FFFFFF?text=SlowMist', link: '#' },
+  ];
+
   return (
-    <section id="audit-security" className="p-8 bg-[var(--dark-gray)] rounded-3xl shadow-xl space-y-6 text-center border-2 border-[var(--accent-green)]">
-      <h2 className="text-4xl font-bold text-[var(--accent-green)] mb-6">Auditorías y Seguridad</h2>
-      <p className="text-[var(--light-gray-text)] text-lg">
-        La seguridad es nuestra máxima prioridad. HighPower DApp se compromete a mantener los más altos estándares de seguridad para proteger los activos y la confianza de nuestros usuarios.
+    <section id="audit-security" className="p-8 bg-[var(--dark-gray)] rounded-3xl shadow-xl space-y-8 text-center border-2 border-[var(--primary-purple)]">
+      <h2 className="text-4xl font-bold text-[var(--primary-purple)] mb-6">Auditorías y Seguridad</h2>
+      <p className="text-[var(--light-gray-text)] text-lg mb-8">
+        La seguridad es nuestra máxima prioridad. HighPower se compromete con auditorías rigurosas y las mejores prácticas para proteger los activos de nuestros usuarios.
       </p>
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="bg-gray-800 p-6 rounded-lg shadow-md border border-gray-700">
-          <i className="fas fa-file-contract text-5xl text-blue-400 mb-4"></i>
-          <h3 className="text-2xl font-semibold text-[var(--off-white)] mb-3">Informes de Auditoría de Contratos</h3>
-          <p className="text-gray-400 mb-4">Accede a los informes completos de auditorías realizadas por firmas de seguridad externas.</p>
-          <a href="#" target="_blank" rel="noopener noreferrer" className="bg-[var(--primary-purple)] hover:bg-[var(--secondary-blue)] text-white font-bold py-2 px-4 rounded-lg transition duration-300">
-            Ver Auditorías (Próximamente)
-          </a>
+
+      {/* Logos de las firmas de auditoría */}
+      <div className="bg-gray-800 p-6 rounded-3xl shadow-xl border border-[var(--accent-yellow)] mb-8">
+        <h3 className="text-3xl font-bold text-[var(--off-white)] mb-6">Nuestros Socios de Seguridad</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 items-center justify-center">
+          {auditFirms.map((firm, index) => (
+            <a 
+              key={index} 
+              href={firm.link} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="flex flex-col items-center justify-center p-4 bg-gray-900 rounded-lg transform transition-transform duration-300 hover:scale-105 hover:shadow-lg hover:border-[var(--secondary-blue)] border border-gray-700"
+            >
+              <img src={firm.logo} alt={firm.name} className="w-24 h-auto mb-2 filter grayscale hover:grayscale-0 transition-filter duration-300" />
+              <p className="text-[var(--light-gray-text)] font-semibold text-sm">{firm.name}</p>
+            </a>
+          ))}
         </div>
-        <div className="bg-gray-800 p-6 rounded-lg shadow-md border border-gray-700">
-          <i className="fas fa-bug text-5xl text-red-400 mb-4"></i>
-          <h3 className="text-2xl font-semibold text-[var(--off-white)] mb-3">Programa de Recompensas por Bugs</h3>
-          <p className="text-gray-400 mb-4">Invitamos a la comunidad de seguridad a identificar y reportar vulnerabilidades.</p>
-          <a href="#" target="_blank" rel="noopener noreferrer" className="bg-[var(--primary-purple)] hover:bg-[var(--secondary-blue)] text-white font-bold py-2 px-4 rounded-lg transition duration-300">
-            Más Información (Próximamente)
-          </a>
-        </div>
+        <p className="text-gray-500 text-sm mt-6">
+          *Los logos y enlaces son simulados. Los informes de auditoría completos se publicarán aquí tras su finalización.
+        </p>
       </div>
-      <div className="mt-8 text-gray-500 text-sm">
-        Comprometidos con la transparencia y las mejores prácticas de seguridad en Web3.
+
+      {/* Compromiso con la seguridad */}
+      <div className="bg-gray-800 p-6 rounded-3xl shadow-xl border border-[var(--accent-green)]">
+        <h3 className="text-3xl font-bold text-[var(--off-white)] mb-6">Nuestro Compromiso de Seguridad</h3>
+        <ul className="text-left text-gray-400 list-disc list-inside space-y-3">
+          <li>
+            <strong className="text-[var(--accent-green)]">Auditorías Externas Constantes:</strong> Todos los contratos inteligentes críticos serán auditados por firmas de seguridad de blockchain de renombre antes de su despliegue y en cada actualización importante.
+          </li>
+          <li>
+            <strong className="text-[var(--accent-green)]">Pruebas Rigurosas:</strong> Implementación de pruebas unitarias y de integración exhaustivas en todo el código base para asegurar la robustez y minimizar vulnerabilidades.
+          </li>
+          <li>
+            <strong className="text-[var(--accent-green)]">Programa de Bug Bounty:</strong> Una vez maduro, consideraremos la implementación de un programa de recompensas por errores para incentivar a la comunidad a identificar y reportar posibles vulnerabilidades.
+          </li>
+          <li>
+            <strong className="text-[var(--accent-green)]">Mejores Prácticas de Desarrollo:</strong> Adherencia estricta a los estándares de seguridad de Solidity y las mejores prácticas de desarrollo Web3.
+          </li>
+          <li>
+            <strong className="text-[var(--accent-green)]">Gestión de Fondos Multi-sig:</strong> Los fondos de la tesorería serán gestionados con billeteras de firmas múltiples para mayor seguridad.
+          </li>
+        </ul>
       </div>
     </section>
   );
