@@ -1,5 +1,5 @@
 // src/sections/HomePage.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 function HomePage({ onLaunchDapp }) {
   // Enlace de Discord - ¡IMPORTANTE: Reemplázalo con tu enlace de invitación real!
@@ -7,20 +7,250 @@ function HomePage({ onLaunchDapp }) {
 
   // Estado para controlar la animación de entrada del contenido principal
   const [showContent, setShowContent] = useState(false);
+  // Referencia al elemento canvas
+  const canvasRef = useRef(null);
 
   useEffect(() => {
-    // Activa la animación de entrada después de un pequeño retraso
-    const timer = setTimeout(() => {
+    // Activa la animación de entrada del contenido principal después de un pequeño retraso
+    const contentTimer = setTimeout(() => {
       setShowContent(true);
-    }, 500); // Pequeño retraso para la aparición escalonada
+    }, 500);
 
-    return () => clearTimeout(timer);
-  }, []);
+    // --- Lógica del fondo animado con Canvas ---
+    const canvas = canvasRef.current;
+    if (!canvas) return; // Salir si el canvas no está montado
+
+    const ctx = canvas.getContext('2d');
+    let animationFrameId;
+
+    // Colores del tema para el fondo de blockchain
+    const getCssVar = (name, fallback) => getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
+
+    const colors = {
+      primaryPurple: getCssVar('--primary-purple', '#8A2BE2'),
+      secondaryBlue: getCssVar('--secondary-blue', '#4169E1'),
+      accentGreen: getCssVar('--accent-green', '#00FF7F'),
+      accentYellow: getCssVar('--accent-yellow', '#FFD700'),
+      lightGrayText: getCssVar('--light-gray-text', '#CCCCCC'),
+      offWhite: getCssVar('--off-white', '#F0F0F0'),
+    };
+
+    // Ajusta el tamaño del canvas a la ventana
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+
+    // Clase para los nodos (bloques/hubs)
+    class Node {
+      constructor(x, y, radius, color, speed) {
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.color = color;
+        this.vx = (Math.random() - 0.5) * speed;
+        this.vy = (Math.random() - 0.5) * speed;
+        this.baseRadius = radius;
+        this.pulse = Math.random() * Math.PI * 2;
+      }
+
+      draw() {
+        ctx.beginPath();
+        this.radius = this.baseRadius + Math.sin(this.pulse) * (this.baseRadius * 0.1);
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.shadowBlur = 60; 
+        ctx.shadowColor = this.color;
+        ctx.globalAlpha = 0.1; 
+        ctx.fill();
+        ctx.shadowBlur = 0; 
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.pulse += 0.02; 
+
+        if (this.x - this.radius < 0 || this.x + this.radius > canvas.width) {
+          this.vx *= -1;
+        }
+        if (this.y - this.radius < 0 || this.y + this.radius > canvas.height) {
+          this.vy *= -1;
+        }
+      }
+    }
+
+    // Clase para las partículas (flujo de datos)
+    class Particle {
+      constructor(x, y, radius, color, speed) {
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.color = color;
+        this.vx = (Math.random() - 0.5) * speed * 3;
+        this.vy = (Math.random() - 0.5) * speed * 3;
+        this.alpha = 1;
+        this.decayRate = Math.random() * 0.02 + 0.01;
+      }
+
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${this.alpha})`; 
+        ctx.globalAlpha = this.alpha * 0.7; 
+        ctx.fill();
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.alpha -= this.decayRate; 
+      }
+    }
+
+    // Clase: DataSphere (burbujas Web3/Crypto/Blockchain)
+    class DataSphere {
+      constructor(x, y, radius, color) {
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.color = color;
+        this.vy = -(0.8 + Math.random() * 1.5); 
+        this.vx = (Math.random() - 0.5) * 0.8; 
+        this.alpha = 0.8; 
+        this.decayRate = 0.003 + Math.random() * 0.003; 
+      }
+
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.shadowBlur = 15; 
+        ctx.shadowColor = this.color;
+        ctx.globalAlpha = this.alpha * 0.8; 
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.alpha -= this.decayRate;
+
+        if (this.y + this.radius < 0 || this.alpha <= 0) {
+          this.x = Math.random() * canvas.width;
+          this.y = canvas.height + this.radius; 
+          this.alpha = 0.8;
+          this.radius = 5 + Math.random() * 10; 
+          const sphereColors = [colors.primaryPurple, colors.secondaryBlue, colors.accentGreen, colors.accentYellow, colors.lightGrayText];
+          this.color = sphereColors[Math.floor(Math.random() * sphereColors.length)];
+          this.vy = -(0.8 + Math.random() * 1.5); 
+        }
+      }
+    }
+
+    // Inicialización
+    const nodes = [];
+    const particles = [];
+    const dataSpheres = []; 
+    const numNodes = 6;
+    const numParticles = 100; 
+    const numDataSpheres = 35; 
+    const spawnParticleInterval = 30; 
+    let lastSpawnTime = 0;
+
+    // Crear nodos
+    const nodeColors = [colors.primaryPurple, colors.secondaryBlue, colors.accentGreen, colors.accentYellow];
+    for (let i = 0; i < numNodes; i++) {
+      const radius = 80 + Math.random() * 100;
+      const x = Math.random() * (canvas.width - radius * 2) + radius;
+      const y = (canvas.height * 0.25) + Math.random() * (canvas.height * 0.75 - radius * 2) + radius; 
+      nodes.push(new Node(x, y, radius, nodeColors[i % nodeColors.length], 0.25)); 
+    }
+
+    // Crear esferas de datos iniciales
+    for (let i = 0; i < numDataSpheres; i++) {
+      const radius = 5 + Math.random() * 10;
+      const x = Math.random() * canvas.width;
+      const y = Math.random() * canvas.height; 
+      const sphereColors = [colors.primaryPurple, colors.secondaryBlue, colors.accentGreen, colors.accentYellow, colors.lightGrayText];
+      dataSpheres.push(new DataSphere(x, y, radius, sphereColors[Math.floor(Math.random() * sphereColors.length)]));
+    }
+
+    // Función principal de animación
+    const animate = (currentTime) => {
+      animationFrameId = requestAnimationFrame(animate);
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height); 
+
+      nodes.forEach(node => {
+        node.update();
+        node.draw();
+      });
+
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const node1 = nodes[i];
+          const node2 = nodes[j];
+          const distance = Math.sqrt(Math.pow(node1.x - node2.x, 2) + Math.pow(node1.y - node2.y, 2));
+
+          const maxDistance = 350; 
+          if (distance < maxDistance) {
+            ctx.beginPath();
+            ctx.moveTo(node1.x, node1.y);
+            ctx.lineTo(node2.x, node2.y);
+            ctx.strokeStyle = `rgba(255, 255, 255, ${((maxDistance - distance) / maxDistance) * 0.07})`; 
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+        }
+      }
+      
+      if (currentTime - lastSpawnTime > spawnParticleInterval && particles.length < numParticles) {
+          const randomNode = nodes[Math.floor(Math.random() * nodes.length)];
+          particles.push(new Particle(randomNode.x, randomNode.y, 1.5 + Math.random(), colors.lightGrayText, 1));
+          lastSpawnTime = currentTime;
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const particle = particles[i];
+        particle.update();
+        particle.draw();
+
+        if (particle.alpha <= 0) {
+          particles.splice(i, 1);
+        }
+      }
+
+      dataSpheres.forEach(sphere => {
+        sphere.update();
+        sphere.draw();
+      });
+
+      ctx.globalAlpha = 1; 
+    };
+
+    // Event listeners
+    window.addEventListener('resize', resizeCanvas);
+
+    // Iniciar
+    resizeCanvas();
+    animate(0); 
+
+    return () => {
+      clearTimeout(contentTimer);
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener('resize', resizeCanvas);
+    };
+  }, []); 
 
   return (
     // Contenedor principal de la Home Page: ocupa toda la altura, centrado visualmente, ocultando desbordamiento
     <div className="relative flex flex-col min-h-screen text-center overflow-hidden bg-[var(--dark-gray)] font-sans">
       
+      {/* Canvas para el fondo animado */}
+      <canvas ref={canvasRef} id="blockchain-background-canvas" className="absolute inset-0 w-full h-full"></canvas>
+
       {/* Barra superior fija para el Logo y el botón "Iniciar aplicación" */}
       <div className="absolute top-0 left-0 w-full p-4 lg:px-8 z-20 flex justify-between items-center bg-transparent">
         {/* Logo HighPower - Esquina superior izquierda */}
@@ -37,107 +267,38 @@ function HomePage({ onLaunchDapp }) {
         </button>
       </div>
 
-      {/* Fondo dinámico temático de Blockchain/Criptomonedas: Nodos y conexiones etéreas */}
-      <div className="absolute inset-0 z-0 overflow-hidden">
-        {/* Nodos/Bloques principales con animaciones de pulsación y movimiento */}
-        <div className="absolute w-40 h-40 rounded-full bg-[var(--primary-purple)] opacity-10 blur-xl animate-node-pulse-1" style={{ top: '10%', left: '15%' }}></div>
-        <div className="absolute w-52 h-52 rounded-full bg-[var(--secondary-blue)] opacity-10 blur-xl animate-node-pulse-2" style={{ bottom: '20%', right: '10%' }}></div>
-        <div className="absolute w-32 h-32 rounded-full bg-[var(--accent-green)] opacity-10 blur-xl animate-node-pulse-3" style={{ top: '30%', right: '25%' }}></div>
-        <div className="absolute w-48 h-48 rounded-full bg-[var(--accent-yellow)] opacity-10 blur-xl animate-node-pulse-4" style={{ bottom: '5%', left: '30%' }}></div>
-
-        {/* Líneas de conexión simuladas o "fibras de datos" */}
-        {Array.from({ length: 40 }).map((_, i) => (
-          <div
-            key={i}
-            className="absolute h-px bg-white opacity-5 rounded-full animate-line-flow"
-            style={{
-              width: `${50 + Math.random() * 100}px`, // Longitud variable de la línea
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              transform: `rotate(${Math.random() * 360}deg)`, // Rotación aleatoria
-              animationDuration: `${10 + Math.random() * 20}s`, // Duración variable
-              animationDelay: `${Math.random() * 10}s`, // Retraso variable
-            }}
-          ></div>
-        ))}
-        {/* Partículas más pequeñas para flujo de datos */}
-        {Array.from({ length: 60 }).map((_, i) => (
-          <div
-            key={`particle-${i}`}
-            className="absolute w-1 h-1 rounded-full bg-white opacity-10 animate-data-particle"
-            style={{
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              animationDuration: `${5 + Math.random() * 15}s`,
-              animationDelay: `${Math.random() * 8}s`,
-            }}
-          ></div>
-        ))}
-      </div>
-
       {/* Contenido principal centrado: Título y botón "Únete a la comunidad" */}
-      <div className={`relative z-10 p-8 max-w-4xl mx-auto flex flex-col items-center justify-center flex-grow
+      {/* CAMBIOS AQUÍ: w-full y px-8 para más ancho, removidos estilos de "alumbrado" directo */}
+      <div className={`relative z-10 p-8 w-full px-8 mx-auto flex flex-col items-center justify-center flex-grow
                       ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}
-                      transition-all duration-1000 ease-out`}>
-        {/* Título principal profesional y relevante, sin animaciones de texto individuales */}
-        <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-[var(--off-white)] leading-tight drop-shadow-lg mb-8">
+                      transition-all duration-1000 ease-out
+                      bg-gray-900 bg-opacity-70 rounded-3xl shadow-2xl border border-purple-700`}>
+        {/* Título principal profesional y relevante, tamaño fijo y sin animaciones de texto individuales */}
+        {/* CAMBIOS AQUÍ: text-6xl fijo, sin responsive para este texto */}
+        <h1 className="text-6xl font-extrabold text-[var(--off-white)] leading-tight drop-shadow-lg mb-8">
           <span className="text-[var(--accent-yellow)]">Potenciando</span> la <span className="text-[var(--accent-green)]">Economía Descentralizada</span>: <br/>
           Tu <span className="text-[var(--primary-purple)]">Ecosistema para Tokens</span>, <br/>
           <span className="text-[var(--secondary-blue)]">NFTs y Rendimientos Sostenibles</span>.
         </h1>
-        {/* Botón "Únete a la comunidad" - Centrado */}
-        <a
-          href={discordInviteLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-10 rounded-full text-2xl
-                     transition duration-300 ease-in-out transform hover:scale-105 shadow-xl animate-bounce-once"
-        >
-            <i className="fab fa-discord mr-3 text-3xl"></i> {/* Icono de Discord, requiere Font Awesome */}
-            Únete a la comunidad
-        </a>
+        {/* Botón "Únete a la comunidad" - Centrado, ahora siempre en fila y tamaño ligeramente reducido */}
+        {/* CAMBIOS AQUÍ: flex-row siempre, espacio consistente, py y px reducidos */}
+        <div className="flex flex-row space-x-6 justify-center">
+          <a
+            href={discordInviteLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-full text-xl
+                       transition duration-300 ease-in-out transform hover:scale-105 shadow-xl animate-bounce-once flex items-center justify-center"
+          >
+              <i className="fab fa-discord mr-3 text-2xl"></i> {/* Icono de Discord */}
+              Únete a la comunidad
+          </a>
+        </div>
       </div>
 
-      {/* Bloque de estilos CSS para las animaciones */}
+      {/* Bloque de estilos CSS que aún se usan para el contenido y animaciones generales */}
       <style>{`
-        /* Animaciones para los nodos principales (pulsación y movimiento lento) */
-        @keyframes node-pulse {
-          0%, 100% { transform: scale(1) translate(0, 0); opacity: 0.1; }
-          25% { transform: scale(1.05) translate(5px, 5px); opacity: 0.15; }
-          50% { transform: scale(1) translate(0, 10px); opacity: 0.1; }
-          75% { transform: scale(1.03) translate(-5px, 5px); opacity: 0.15; }
-        }
-        .animate-node-pulse-1 { animation: node-pulse 25s infinite alternate ease-in-out; }
-        .animate-node-pulse-2 { animation: node-pulse 30s infinite alternate ease-in-out reverse; }
-        .animate-node-pulse-3 { animation: node-pulse 28s infinite alternate ease-in-out; }
-        .animate-node-pulse-4 { animation: node-pulse 32s infinite alternate ease-in-out reverse; }
-
-        /* Animación para las líneas de conexión/fibras de datos */
-        @keyframes line-flow {
-          0% { transform: translate(var(--start-x, 0), var(--start-y, 0)) rotate(var(--start-rotate, 0deg)); opacity: 0; }
-          10% { opacity: 0.05; }
-          50% { transform: translate(var(--mid-x, 0), var(--mid-y, 0)) rotate(var(--mid-rotate, 0deg)); opacity: 0.1; }
-          90% { opacity: 0.05; }
-          100% { transform: translate(var(--end-x, 0), var(--end-y, 0)) rotate(var(--end-rotate, 0deg)); opacity: 0; }
-        }
-        /* Para simular un movimiento más fluido y aleatorio para cada línea,
-           las variables --start-x/y, --mid-x/y, --end-x/y, y sus rotaciones
-           necesitarían ser inyectadas dinámicamente por JS en un entorno de producción.
-           Aquí, estamos aplicando una animación genérica para que se vean moviéndose. */
-
-        /* Animación para las partículas de datos pequeñas */
-        @keyframes data-particle {
-            0% { transform: translate(0, 0); opacity: 0; }
-            10% { opacity: 0.1; }
-            50% { transform: translate(calc(var(--random-x) * 1px), calc(var(--random-y) * 1px)); opacity: 0.2; }
-            90% { opacity: 0.1; }
-            100% { transform: translate(calc(var(--random-x-end) * 1px), calc(var(--random-y-end) * 1px)); opacity: 0; }
-        }
-        /* Para que cada partícula tenga un camino único, las variables CSS
-           (--random-x, --random-y, etc.) se generan inline en el JSX. */
-
-
-        /* Animaciones generales de fade-in y bounce */
+        /* Animaciones generales de entrada de contenido */
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 1; }
