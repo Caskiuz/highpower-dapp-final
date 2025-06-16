@@ -29,13 +29,12 @@ import YieldMechanismsSection from './sections/YieldMechanismsSection';
 import NftGallerySection from './sections/NftGallerySection';
 import SwapSection from './sections/SwapSection';
 import DaoSection from './sections/DaoSection';
-import RoadmapSection from './sections/RoadmapSection';
+import RoadmapSection from './sections/RoadmapSection'; // <-- YA ESTABA IMPORTADO
 import TechStackSection from './sections/TechStackSection';
 import ContactSection from './sections/ContactSection';
-// NUEVAS IMPORTACIONES DE SECCIONES (Placeholder)
-import IncubationSection from './sections/IncubationSection';
-// import LibrarySection from './sections/LibrarySection'; // <-- Ya no se importa, reemplazada por Whitepaper
-import WhitepaperSection from './sections/WhitepaperSection'; // <-- NUEVA IMPORTACIÓN
+// Secciones placeholder
+// import IncubationSection from './sections/IncubationSection'; // <-- ELIMINADO: Ya no está en el sidebar
+import WhitepaperSection from './sections/WhitepaperSection'; 
 import SupportSection from './sections/SupportSection';
 
 // --- Constantes de Contratos ---
@@ -178,29 +177,27 @@ function AppContent() {
     switch (currentSection) {
       case 'dashboard':
         return <DashboardSection {...commonSectionProps} />;
-      case 'incubation':
-        return <IncubationSection />;
+      // case 'incubation': // <-- ELIMINADO: Ya no está en el sidebar
+      //   return <IncubationSection />; 
       case 'yield':
         return <YieldMechanismsSection {...commonSectionProps} />;
       case 'nfts':
         return <NftGallerySection {...commonSectionProps} />;
       case 'dao':
         return <DaoSection />;
-      case 'whitepaper': // <-- NUEVO CASO para Whitepaper
+      case 'roadmap': // <-- ESTE CASO ES EL QUE SE CONECTA AHORA DESDE EL SIDEBAR
+        return <RoadmapSection />;
+      case 'whitepaper':
         return <WhitepaperSection />;
       case 'support':
         return <SupportSection />;
-      // Las secciones 'about', 'tokenomics', 'swap', 'roadmap', 'tech', 'contact' ya no están en el sidebar principal de PixelRealm
-      // Si las necesitas accesibles, podrías considerar un menú secundario o incluirlas en alguna sección.
-      // Por ahora, se mantienen aquí para que el código no falle si se accede por URL directa.
+      // Otras secciones que podrían no estar en el sidebar principal pero se mantienen por si se accede directamente
       case 'about':
         return <AboutSection />;
       case 'tokenomics':
         return <TokenomicsSection />;
       case 'swap':
         return <SwapSection />;
-      case 'roadmap':
-        return <RoadmapSection />;
       case 'tech':
         return <TechStackSection />;
       case 'contact':
@@ -232,13 +229,11 @@ function AppContent() {
           />
           
           {/* Layout principal: Sidebar a la izquierda y Contenido Principal a la derecha */}
-          {/* pt-[72px] es la altura de la Navbar */}
           <div className="flex flex-1 pt-[72px]"> 
             {/* Sidebar Lateral */}
             <Sidebar onNavigate={setCurrentSection} currentSection={currentSection} />
 
             {/* Área de Contenido Principal: Ocupa el resto del espacio horizontal */}
-            {/* ml-20/ml-24 es el ancho del sidebar */}
             <main className="flex-grow p-4 md:p-6 lg:p-8 ml-20 lg:ml-24"> 
               {renderCurrentSection()}
             </main>

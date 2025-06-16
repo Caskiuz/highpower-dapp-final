@@ -5,14 +5,13 @@ import React from 'react';
 
 function Sidebar({ onNavigate, currentSection }) {
   const navItems = [
-    // Mapeo directo a tus secciones actuales o futuras
     { name: 'Dashboard', path: 'dashboard', icon: 'fa-gauge-high' },
-    { name: 'Incubación', path: 'incubation', icon: 'fa-seedling' }, // Icono para "crecimiento/incubación"
-    { name: 'Recompensas', path: 'yield', icon: 'fa-coins' }, // Tu sección de Rendimientos
-    { name: 'Gobernanza', path: 'dao', icon: 'fa-gavel' }, // Tu sección de Gobernanza DAO
-    { name: 'Metamarket', path: 'nfts', icon: 'fa-store' }, // Tu sección de NFTs/Marketplace
-    { name: 'Whitepaper', path: 'whitepaper', icon: 'fa-file-lines' }, // <-- CAMBIO AQUÍ: Whitepaper con icono de documento
-    { name: 'Soporte', path: 'support', icon: 'fa-headset' }, // Icono de auriculares
+    { name: 'Roadmap', path: 'roadmap', icon: 'fa-road' }, // <-- CAMBIO AQUÍ: 'Incubación' reemplazado por 'Roadmap'
+    { name: 'Recompensas', path: 'yield', icon: 'fa-coins' }, 
+    { name: 'Gobernanza', path: 'dao', icon: 'fa-gavel' }, 
+    { name: 'Metamarket', path: 'nfts', icon: 'fa-store' }, 
+    { name: 'Whitepaper', path: 'whitepaper', icon: 'fa-file-lines' },
+    { name: 'Soporte', path: 'support', icon: 'fa-headset' }, 
   ];
 
   return (
