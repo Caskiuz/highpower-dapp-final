@@ -3,11 +3,10 @@ import React, { useState, useEffect } from 'react';
 // Asegúrate de tener Font Awesome cargado en tu index.html para estos iconos.
 // <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-function Sidebar({ onNavigate, currentSection, onExpandChange }) { // Recibe onExpandChange
+function Sidebar({ onNavigate, currentSection, onExpandChange }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
-  // El estado 'isExpanded' se activará si el mouse está encima
   useEffect(() => {
     setIsExpanded(isHovered);
     onExpandChange(isHovered); // Notificar a App.jsx sobre el cambio de expansión
@@ -15,31 +14,31 @@ function Sidebar({ onNavigate, currentSection, onExpandChange }) { // Recibe onE
 
   // ORDEN DE SECCIONES OPTIMIZADO PARA INVERSORES
   const navItems = [
-    // 1. Información de Actividad/General
+    // 1. Atracción y Dinamismo
     { name: 'Noticias', path: 'news-announcements', icon: 'fa-newspaper' }, 
+    
+    // 2. Visión General Rápida
     { name: 'Dashboard', path: 'dashboard', icon: 'fa-gauge-high' },
 
-    // 2. Fundamentos del Proyecto
+    // 3. Fundamentos y Credibilidad
     { name: 'Whitepaper', path: 'whitepaper', icon: 'fa-file-lines' },
     { name: 'Roadmap', path: 'roadmap', icon: 'fa-road' }, 
-    { name: 'Auditorías', path: 'audit-security', icon: 'fa-shield-halved' },
+    { name: 'Auditorías', path: 'audit-security', icon: 'fa-shield-halved' }, // Icono confirmado
     { name: 'Tokenomics', path: 'tokenomics', icon: 'fa-chart-pie' },
 
-    // 3. Funcionalidades Clave y Ecosistema
+    // 4. Utilidad y Oportunidades (Funcionalidades Clave)
     { name: 'Recompensas', path: 'yield', icon: 'fa-coins' }, 
     { name: 'Metamarket', path: 'nfts', icon: 'fa-store' }, 
     { name: 'Gobernanza', path: 'dao', icon: 'fa-gavel' }, 
+    { name: 'Swap', path: 'swap', icon: 'fa-right-left' }, 
+    
+    // 5. Transparencia y Soporte
     { name: 'Socios', path: 'partners-ecosystem', icon: 'fa-handshake' },
     { name: 'Equipo', path: 'team', icon: 'fa-users' },
-    { name: 'Tech Stack', path: 'tech', icon: 'fa-gears' },
-
-    // 4. Soporte y Contacto (ordenados al final)
     { name: 'FAQ', path: 'faq', icon: 'fa-circle-question' },
     { name: 'Soporte', path: 'support', icon: 'fa-headset' }, 
     { name: 'Contacto', path: 'contact', icon: 'fa-envelope' },
-    { name: 'Acerca de', path: 'about', icon: 'fa-circle-info' }, // General info, a menudo al final
-    // Swap no está en este sidebar, pero se mantiene accesible por su URL si se desea
-    // { name: 'Swap', path: 'swap', icon: 'fa-right-left' }, 
+    // 'Acerca de' y 'Tech Stack' eliminados del sidebar para evitar redundancia y simplificar
   ];
 
   return (

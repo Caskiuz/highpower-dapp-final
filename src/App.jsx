@@ -16,21 +16,21 @@ import { formatUnits } from 'viem';
 import MyNFTABI from './abis/MyNFT.json';
 import SimpleTokenABI from './abis/SimpleToken.json';
 
-// Importa los componentes y secciones refactorizadas
+// Importa los componentes y secciones
 import CursorTrail from './components/CursorTrail';
 import CustomModal from './components/CustomModal';
 import Navbar from './components/Navbar'; 
 import Sidebar from './components/Sidebar'; 
 import HomePage from './sections/HomePage'; 
 import DashboardSection from './sections/DashboardSection';
-import AboutSection from './sections/AboutSection';
+import AboutSection from './sections/AboutSection'; // MANTENER IMPORTACIÓN
 import TokenomicsSection from './sections/TokenomicsSection';
 import YieldMechanismsSection from './sections/YieldMechanismsSection';
 import NftGallerySection from './sections/NftGallerySection';
 import SwapSection from './sections/SwapSection';
 import DaoSection from './sections/DaoSection';
 import RoadmapSection from './sections/RoadmapSection'; 
-import TechStackSection from './sections/TechStackSection';
+import TechStackSection from './sections/TechStackSection'; // MANTENER IMPORTACIÓN
 import ContactSection from './sections/ContactSection';
 import WhitepaperSection from './sections/WhitepaperSection'; 
 import SupportSection from './sections/SupportSection';
@@ -150,8 +150,7 @@ function AppContent() {
   }, [isConnected, address, refetchHGPBalance, refetchNftBalance]);
 
   const handleLaunchDapp = useCallback(() => {
-    // CAMBIO CLAVE: Iniciar la aplicación en la sección de Noticias
-    setCurrentSection('news-announcements'); 
+    setCurrentSection('news-announcements'); // Sigue siendo el punto de entrada para inversores
   }, []);
 
   const renderCurrentSection = () => {
@@ -180,12 +179,17 @@ function AppContent() {
       HPNFT_ERC721_ADDRESS,
     };
 
-    // ORDEN DE SECCIONES OPTIMIZADO PARA INVERSORES
+    // ORDEN DEL SWITCH QUE COINCIDE CON LA NAVEGACIÓN DEL SIDEBAR
     switch (currentSection) {
+      // 1. Atracción y Dinamismo
       case 'news-announcements':
         return <NewsAnnouncementsSection />;
+      
+      // 2. Visión General Rápida
       case 'dashboard':
         return <DashboardSection {...commonSectionProps} />;
+
+      // 3. Fundamentos y Credibilidad
       case 'whitepaper':
         return <WhitepaperSection />;
       case 'roadmap':
@@ -193,31 +197,39 @@ function AppContent() {
       case 'audit-security':
         return <AuditSecuritySection />;
       case 'tokenomics':
-        return <TokenomicsSection />;
+        return <TokenomicsSection />; 
+
+      // 4. Utilidad y Oportunidades
       case 'yield':
         return <YieldMechanismsSection {...commonSectionProps} />;
       case 'nfts':
         return <NftGallerySection {...commonSectionProps} />;
       case 'dao':
         return <DaoSection />;
+      case 'swap':
+        return <SwapSection />;
+      
+      // 5. Transparencia y Soporte
       case 'partners-ecosystem':
         return <PartnersEcosystemSection />;
       case 'team':
         return <TeamSection />;
       case 'faq':
         return <FAQSection />;
-      case 'tech':
-        return <TechStackSection />;
-      case 'about':
-        return <AboutSection />;
+      case 'support':
+        return <SupportSection />;
       case 'contact':
         return <ContactSection />;
-      case 'swap': // Mantener Swap aquí, ya que no se prioriza en el Sidebar para inversores iniciales
-        return <SwapSection />;
-      case 'incubation': // Se mantiene para compatibilidad con la URL, aunque no esté en el sidebar
+      
+      // Secciones que ya no están en el sidebar pero se mantienen por compatibilidad
+      case 'about':
+        return <AboutSection />;
+      case 'tech':
+        return <TechStackSection />;
+      case 'incubation':
         return <IncubationSection />;
       default:
-        // Fallback para cualquier sección no encontrada, idealmente debería ir a una 404 o al dashboard
+        // Fallback a Noticias si la sección no se encuentra o es la primera carga
         return <NewsAnnouncementsSection />; 
     }
   };
