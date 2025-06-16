@@ -1,11 +1,23 @@
+// tailwind.config.js
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
     "./index.html",
-    "./src/**/*.{js,jsx}",
+    "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {}, // Aquí NO se están extendiendo los colores de HighPower
+    extend: {
+      // Define tus variables de color CSS aquí para que Tailwind las use
+      colors: {
+        'dark-gray': 'var(--dark-gray)',
+        'light-gray-text': 'var(--light-gray-text)',
+        'primary-purple': 'var(--primary-purple)',
+        'secondary-blue': 'var(--secondary-blue)',
+        'accent-green': 'var(--accent-green)',
+        'accent-yellow': 'var(--accent-yellow)',
+        'off-white': 'var(--off-white)',
+      },
+    },
   },
-  plugins: [],
+  plugins: [], // ¡ESTO DEBE ESTAR VACÍO!
 }
