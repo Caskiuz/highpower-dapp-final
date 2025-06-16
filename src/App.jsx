@@ -41,13 +41,11 @@ import FAQSection from './sections/FAQSection';
 import NewsAnnouncementsSection from './sections/NewsAnnouncementsSection';
 import IncubationSection from './sections/IncubationSection';
 
-// --- Constantes de Contratos ---
-// Asumiendo que estas son las direcciones de la testnet que quieres usar
-const HGP_ERC20_ADDRESS = '0x03Fd2cE62B4BB54f09716f9588A5E13bC0756773'; 
-const HPNFT_ERC721_ADDRESS = '0x11Cae128d6AD9A00ceAF179171321F2E0abE30a8'; 
-// Las direcciones de Staking y DAO se mantendrán como placeholders por ahora, ya que no están desplegadas.
-const HGP_STAKING_ADDRESS = '0x3D4E5F6A7B8C9D0E1F2A3B4C5D6E7F8A9B0C1D2E'; 
-const HGP_DAO_ADDRESS = '0x4E5F6A7B8C9D0E1F2A3B4C5D6E7F8A9B0C1D2F';
+// --- Constantes de Contratos (EXPORTADAS para acceso desde otros componentes) ---
+export const HGP_ERC20_ADDRESS = '0x03Fd2cE62B4BB54f09716f9588A5E13bC0756773'; 
+export const HPNFT_ERC721_ADDRESS = '0x11Cae128d6AD9A00ceAF179171321F2E0abE30a8'; 
+export const HGP_STAKING_ADDRESS = '0x3D4E5F6A7B8C9D0E1F2A3B4C5D6E7F8A9B0C1D2E'; 
+export const HGP_DAO_ADDRESS = '0x4E5F6A7B8C9D0E1F2A3B4C5D6E7F8A9B0C1D2F';
 
 
 function AppContent() {
@@ -262,9 +260,11 @@ function AppContent() {
       case 'nfts':
         return <NftGallerySection {...commonSectionProps} />;
       case 'dao':
-        return <DaoSection {...commonSectionProps} />; 
+        return <DaoSection {...commonSectionProps} />;
       case 'swap':
         return <SwapSection {...commonSectionProps} />; 
+      case 'incubation': 
+        return <IncubationSection />;
       case 'partners-ecosystem':
         return <PartnersEcosystemSection />;
       case 'team':
@@ -279,8 +279,6 @@ function AppContent() {
         return <AboutSection />;
       case 'tech':
         return <TechStackSection />;
-      case 'incubation':
-        return <IncubationSection />;
       default:
         return <NewsAnnouncementsSection />; 
     }

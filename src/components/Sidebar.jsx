@@ -23,7 +23,7 @@ function Sidebar({ onNavigate, currentSection, onExpandChange }) {
     // 3. Fundamentos y Credibilidad
     { name: 'Whitepaper', path: 'whitepaper', icon: 'fa-file-lines' },
     { name: 'Roadmap', path: 'roadmap', icon: 'fa-road' }, 
-    { name: 'Auditorías', path: 'audit-security', icon: 'fa-shield-halved' }, // Icono confirmado
+    { name: 'Auditorías', path: 'audit-security', icon: 'fa-shield-halved' },
     { name: 'Tokenomics', path: 'tokenomics', icon: 'fa-chart-pie' },
 
     // 4. Utilidad y Oportunidades (Funcionalidades Clave)
@@ -33,12 +33,12 @@ function Sidebar({ onNavigate, currentSection, onExpandChange }) {
     { name: 'Swap', path: 'swap', icon: 'fa-right-left' }, 
     
     // 5. Transparencia y Soporte
+    { name: 'Incubadora', path: 'incubation', icon: 'fa-seedling' },
     { name: 'Socios', path: 'partners-ecosystem', icon: 'fa-handshake' },
     { name: 'Equipo', path: 'team', icon: 'fa-users' },
     { name: 'FAQ', path: 'faq', icon: 'fa-circle-question' },
     { name: 'Soporte', path: 'support', icon: 'fa-headset' }, 
     { name: 'Contacto', path: 'contact', icon: 'fa-envelope' },
-    // 'Acerca de' y 'Tech Stack' eliminados del sidebar para evitar redundancia y simplificar
   ];
 
   return (
@@ -55,10 +55,10 @@ function Sidebar({ onNavigate, currentSection, onExpandChange }) {
             key={item.path}
             onClick={() => onNavigate(item.path)}
             className={`group flex items-center justify-start p-3 my-1 w-full rounded-lg
-                        transition-colors duration-300 ease-in-out
+                        transition-all duration-300 ease-in-out transform hover:scale-105 hover:bg-gray-800 hover:shadow-lg
                         ${currentSection === item.path 
                           ? 'bg-purple-800 text-white shadow-lg' 
-                          : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                          : 'text-gray-400 hover:text-white'
                         }
                         ${isExpanded ? 'px-4' : 'justify-center'}`} 
             title={item.name} 
