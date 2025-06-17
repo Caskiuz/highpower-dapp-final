@@ -44,8 +44,8 @@ function Navbar({ isConnected, address, balanceData, hgpBalance, nftCount, conne
         <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 object-contain">
           <rect x="0" y="0" width="40" height="40" rx="8" fill="#1C1C28"/> {/* Fondo oscuro del logo */}
 
-          <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle"
-                font-family="Inter, Arial, sans-serif" font-size="18" font-weight="bold">
+          <text x="50%" y="55%" dominantBaseline="middle" textAnchor="middle" // Corregido: dominant-baseline -> dominantBaseline, text-anchor -> textAnchor
+                fontFamily="Inter, Arial, sans-serif" fontSize="18" fontWeight="bold"> // Corregido: font-family -> fontFamily, font-size -> fontSize, font-weight -> fontWeight
             <tspan fill="#8A2BE2">H</tspan>
             <tspan fill="#39FF14">G</tspan>
             <tspan fill="#FF4081">P</tspan>

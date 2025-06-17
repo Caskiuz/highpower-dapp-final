@@ -15,6 +15,7 @@ function Sidebar({ onNavigate, currentSection, onExpandChange }) {
   // ORDEN DE SECCIONES OPTIMIZADO PARA INVERSORES
   const navItems = [
     // 1. Atracción y Dinamismo
+    { name: 'Inicio', path: 'home', icon: 'fa-house' }, // Agregado para que puedas volver a Home
     { name: 'Noticias', path: 'news-announcements', icon: 'fa-newspaper' }, 
     
     // 2. Visión General Rápida
@@ -30,8 +31,9 @@ function Sidebar({ onNavigate, currentSection, onExpandChange }) {
     { name: 'Recompensas', path: 'yield', icon: 'fa-coins' }, 
     { name: 'Metamarket', path: 'nfts', icon: 'fa-store' }, 
     { name: 'Gobernanza', path: 'dao', icon: 'fa-gavel' }, 
-    { name: 'Swap', path: 'swap', icon: 'fa-right-left' }, 
-    
+    // REMOVIDO: { name: 'Swap', path: 'swap', icon: 'fa-right-left' }, 
+    { name: 'Trading & Analíticas', path: 'trading-analytics', icon: 'fa-chart-line' },
+
     // 5. Transparencia y Soporte
     { name: 'Incubadora', path: 'incubation', icon: 'fa-seedling' },
     { name: 'Socios', path: 'partners-ecosystem', icon: 'fa-handshake' },
@@ -39,6 +41,8 @@ function Sidebar({ onNavigate, currentSection, onExpandChange }) {
     { name: 'FAQ', path: 'faq', icon: 'fa-circle-question' },
     { name: 'Soporte', path: 'support', icon: 'fa-headset' }, 
     { name: 'Contacto', path: 'contact', icon: 'fa-envelope' },
+    { name: 'Nosotros', path: 'about', icon: 'fa-info-circle' }, 
+    { name: 'Tech Stack', path: 'tech', icon: 'fa-microchip' },
   ];
 
   return (

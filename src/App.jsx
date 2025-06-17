@@ -7,7 +7,9 @@ import {
   useConnect,
   useDisconnect,
 } from 'wagmi';
-import { bscTestnet } from 'wagmi/chains'; // Solo necesitamos bscTestnet para el publicClient
+import { bscTestnet } from 'wagmi/chains';
+
+import { formatUnits, createPublicClient, http } from 'viem';
 
 // Importa todas las configuraciones de contratos desde nuestro archivo centralizado
 import {
@@ -15,28 +17,29 @@ import {
   NFT_CONTRACT_CONFIG,
   STAKING_CONTRACT_CONFIG,
   DAO_CONTRACT_CONFIG,
-  UI_PROPOSAL_THRESHOLD_HGP // También se exporta para uso general si es necesario en la UI
-} from "./constants/contract-config.js"; // Ruta correcta: ./constants/contract-config.js
+  UI_PROPOSAL_THRESHOLD_HGP,
+  // Asegúrate de que todas las direcciones y ABIs de PancakeSwap estén en contract-config.js
+} from "./constants/contract-config.js";
 
-import { formatUnits, createPublicClient, http } from 'viem';
-
-// Importa tus componentes y secciones (tal como los tenías)
+// Importa tus componentes estructurales
 import CursorTrail from './components/CursorTrail';
 import CustomModal from './components/CustomModal';
-import Navbar from './components/Navbar'; 
-import Sidebar from './components/Sidebar'; 
-import HomePage from './sections/HomePage'; 
+import Navbar from './components/Navbar';
+import Sidebar from './components/Sidebar';
+
+// Importa TODAS tus secciones existentes (sin cambios de contenido)
+import HomePage from './sections/HomePage';
 import DashboardSection from './sections/DashboardSection';
 import AboutSection from './sections/AboutSection';
 import TokenomicsSection from './sections/TokenomicsSection';
 import YieldMechanismsSection from './sections/YieldMechanismsSection';
 import NftGallerySection from './sections/NftGallerySection';
-import SwapSection from './sections/SwapSection';
+// import SwapSection from './sections/SwapSection'; // <-- REMOVIDO
 import DaoSection from './sections/DaoSection';
-import RoadmapSection from './sections/RoadmapSection'; 
+import RoadmapSection from './sections/RoadmapSection';
 import TechStackSection from './sections/TechStackSection';
 import ContactSection from './sections/ContactSection';
-import WhitepaperSection from './sections/WhitepaperSection'; 
+import WhitepaperSection from './sections/WhitepaperSection';
 import SupportSection from './sections/SupportSection';
 import AuditSecuritySection from './sections/AuditSecuritySection';
 import PartnersEcosystemSection from './sections/PartnersEcosystemSection';
@@ -45,9 +48,11 @@ import FAQSection from './sections/FAQSection';
 import NewsAnnouncementsSection from './sections/NewsAnnouncementsSection';
 import IncubationSection from './sections/IncubationSection';
 
+// IMPORTA LA NUEVA SECCIÓN DE TRADING Y ANALÍTICAS
+import TradingAndAnalyticsSection from './sections/TradingAndAnalyticsSection';
+
 
 // Configuración de un cliente público de Viem para llamadas de lectura directas
-// Útil para llamadas que no necesitan un wallet conectado (ej: total supply, propuestas DAO)
 const publicClient = createPublicClient({
   chain: bscTestnet,
   transport: http(bscTestnet.rpcUrls.default.http[0]),
@@ -55,12 +60,13 @@ const publicClient = createPublicClient({
 
 
 function AppContent() {
-  const [currentSection, setCurrentSection] = useState('home'); 
+  const [currentSection, setCurrentSection] = useState('home');
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
 
   const { address, isConnected, chain } = useAccount();
-  const { data: balanceData } = useBalance({
+  // balanceData es el balance de la moneda nativa (BNB)
+  const { data: balanceData, refetch: refetchBNBBalance } = useBalance({
     address: address,
     query: {
       enabled: isConnected && !!address,
@@ -88,12 +94,12 @@ function AppContent() {
   // --- Lectura de datos de contrato (HGP Token y NFT) directamente en App.jsx para pasar a Navbar/Dashboard ---
   // HGP Token Balance del usuario
   const { data: hgpTokenBalanceData, refetch: refetchHGPBalance } = useReadContract({
-    ...HGP_TOKEN_CONFIG, // Usa la configuración del archivo centralizado
+    ...HGP_TOKEN_CONFIG,
     functionName: 'balanceOf',
     args: [address],
     query: {
       enabled: isConnected && !!address,
-      watch: true, 
+      watch: true,
     },
   });
 
@@ -103,7 +109,7 @@ function AppContent() {
     functionName: 'decimals',
     query: {
       enabled: isConnected && !!address,
-      staleTime: Infinity, 
+      staleTime: Infinity,
     },
   });
 
@@ -112,35 +118,35 @@ function AppContent() {
     ...HGP_TOKEN_CONFIG,
     functionName: 'totalSupply',
     query: {
-      enabled: isConnected, // No necesita address conectado, solo que haya conexión a la red
-      staleTime: Infinity, 
+      enabled: isConnected,
+      staleTime: Infinity,
     },
   });
 
   // Balance de NFTs del usuario
   const { data: nftBalanceData, refetch: refetchNftBalance } = useReadContract({
-    ...NFT_CONTRACT_CONFIG, // Usa la configuración del archivo centralizado
+    ...NFT_CONTRACT_CONFIG,
     functionName: 'balanceOf',
     args: [address],
     query: {
       enabled: isConnected && !!address,
-      watch: true, 
+      watch: true,
     },
   });
 
   useEffect(() => {
     console.log("Estado de la conexión (desde AppContent):", { address, isConnected, chain });
-    // Aquí puedes loguear las direcciones desde HGP_TOKEN_CONFIG, etc.
-    console.log("  Dirección de HGP ERC20 configurada:", HGP_TOKEN_CONFIG.address);
-    console.log("  Dirección de HPNFT ERC721 configurada:", NFT_CONTRACT_CONFIG.address);
-    console.log("  Dirección de HGP Staking configurada:", STAKING_CONTRACT_CONFIG.address);
-    console.log("  Dirección de HGP DAO configurada:", DAO_CONTRACT_CONFIG.address);
+    console.log("   Dirección de HGP ERC20 configurada:", HGP_TOKEN_CONFIG.address);
+    console.log("   Dirección de HPNFT ERC721 configurada:", NFT_CONTRACT_CONFIG.address);
+    console.log("   Dirección de HGP Staking configurada:", STAKING_CONTRACT_CONFIG.address);
+    console.log("   Dirección de HGP DAO configurada:", DAO_CONTRACT_CONFIG.address);
 
     if (isConnected && address) {
       refetchHGPBalance();
       refetchNftBalance();
+      refetchBNBBalance(); // Refetch el balance de BNB también al conectar
     }
-  }, [address, isConnected, chain, refetchHGPBalance, refetchNftBalance]);
+  }, [address, isConnected, chain, refetchHGPBalance, refetchNftBalance, refetchBNBBalance]);
 
   // Formatear los datos para la UI
   const decimals = hgpDecimalsData !== undefined ? Number(hgpDecimalsData) : 18;
@@ -148,9 +154,12 @@ function AppContent() {
   const formattedTotalHGPSupply = hgpTotalSupplyData !== undefined ? formatUnits(hgpTotalSupplyData, decimals) : 'Cargando...';
   const formattedNftCount = nftBalanceData !== undefined ? nftBalanceData.toString() : '0';
 
+  // Formatea el balance de BNB para pasarlo a las secciones
+  const formattedBNBBalance = balanceData?.value !== undefined ? formatUnits(balanceData.value, 18) : '0.0';
+
 
   const handleLaunchDapp = useCallback(() => {
-    setCurrentSection('news-announcements'); 
+    setCurrentSection('news-announcements');
   }, []);
 
   const renderCurrentSection = () => {
@@ -160,69 +169,82 @@ function AppContent() {
       userAddress: address, // Renombrado a userAddress para mayor claridad en secciones
       onNavigate: setCurrentSection,
       showCustomModal,
-      // Pasa las configuraciones completas de los contratos
-      hgpTokenConfig: HGP_TOKEN_CONFIG,
+      publicClient, // Pasa el cliente público para llamadas de lectura (algunas secciones aún lo necesitan)
+      hgpTokenConfig: HGP_TOKEN_CONFIG, // Pasa la config completa
       nftContractConfig: NFT_CONTRACT_CONFIG,
-      stakingContractConfig: STAKING_CONTRACT_CONFIG,
+      stakingContractConfig: STAKING_CONTRACT_CONFIG, // <-- Corregido aquí de fStakingContractConfig
       daoContractConfig: DAO_CONTRACT_CONFIG,
       uiProposalThreshold: UI_PROPOSAL_THRESHOLD_HGP,
-      publicClient, // Pasa el cliente público para llamadas de lectura
-      
-      // Datos de balance y recarga (pasados como BigInt, las secciones los formatearán si es necesario)
-      hgpBalance: hgpTokenBalanceData, 
-      refetchHGPBalance,
-      nftCount: nftBalanceData, 
-      refetchNftBalance,
+    };
 
-      // Otros datos generales de la DApp
-      balanceData, // Balance nativo de la cadena (BNB)
+    // Props específicas de balances y refetch para las secciones que las necesiten
+    const balanceProps = {
+      hgpBalance: hgpTokenBalanceData, // HGP balance en BigInt
+      refetchHGPBalance,
+      bnbBalance: balanceData?.value, // BNB balance en BigInt
+      refetchBNBBalance, // Función para refetch de BNB
+      nftCount: nftBalanceData,
+      refetchNftBalance,
       totalHGPSupply: formattedTotalHGPSupply, // Total supply ya formateado
+      formattedHgpBalance, // HGP balance ya formateado (para secciones que lo usen directamente)
+      formattedBNBBalance, // BNB balance ya formateado (para secciones que lo usen directamente)
     };
 
     switch (currentSection) {
+      case 'home':
+        return <HomePage onLaunchDapp={handleLaunchDapp} onShowVideo={() => setShowVideoModal(true)} />;
       case 'news-announcements':
-        return <NewsAnnouncementsSection />;
+        return <NewsAnnouncementsSection {...commonSectionProps} {...balanceProps} />;
       case 'dashboard':
-        return <DashboardSection {...commonSectionProps} />;
+        return <DashboardSection {...commonSectionProps} {...balanceProps} />;
       case 'whitepaper':
-        return <WhitepaperSection />;
+        return <WhitepaperSection {...commonSectionProps} />;
       case 'roadmap':
-        return <RoadmapSection />;
+        return <RoadmapSection {...commonSectionProps} />;
       case 'audit-security':
-        return <AuditSecuritySection />;
+        return <AuditSecuritySection {...commonSectionProps} />;
       case 'tokenomics':
-        return <TokenomicsSection />; 
+        return <TokenomicsSection {...commonSectionProps} {...balanceProps} />;
       case 'yield':
-        return <YieldMechanismsSection {...commonSectionProps} />;
+        return <YieldMechanismsSection {...commonSectionProps} {...balanceProps} />;
       case 'nfts':
-        return <NftGallerySection {...commonSectionProps} />;
+        return <NftGallerySection {...commonSectionProps} {...balanceProps} />;
       case 'dao':
-        return <DaoSection {...commonSectionProps} />;
-      case 'swap':
-        return <SwapSection {...commonSectionProps} />; 
-      case 'incubation': 
-        return <IncubationSection />;
+        return <DaoSection {...commonSectionProps} {...balanceProps} />;
+      // case 'swap': // <-- REMOVIDO
+      //   return <SwapSection {...commonSectionProps} {...balanceProps} />; // <-- REMOVIDO
+      case 'incubation':
+        return <IncubationSection {...commonSectionProps} />;
       case 'partners-ecosystem':
-        return <PartnersEcosystemSection />;
+        return <PartnersEcosystemSection {...commonSectionProps} />;
       case 'team':
-        return <TeamSection />;
+        return <TeamSection {...commonSectionProps} />;
       case 'faq':
-        return <FAQSection />;
+        return <FAQSection {...commonSectionProps} />;
       case 'support':
-        return <SupportSection />;
+        return <SupportSection {...commonSectionProps} />;
       case 'contact':
-        return <ContactSection />;
+        return <ContactSection {...commonSectionProps} />;
       case 'about':
-        return <AboutSection />;
+        return <AboutSection {...commonSectionProps} />;
       case 'tech':
-        return <TechStackSection />;
+        return <TechStackSection {...commonSectionProps} />;
+
+      case 'trading-analytics': // ¡LA SECCIÓN DE TRADING Y ANALÍTICAS!
+        return <TradingAndAnalyticsSection 
+                  isConnected={isConnected}
+                  userAddress={address}
+                  hgpBalance={hgpTokenBalanceData} // Pasamos el BigInt raw aquí
+                  bnbBalance={balanceData?.value} // Pasamos el BigInt raw aquí
+                  showCustomModal={showCustomModal}
+                />;
       default:
-        return <NewsAnnouncementsSection />; 
+        return <NewsAnnouncementsSection {...commonSectionProps} {...balanceProps} />;
     }
   };
 
   return (
-    <div className="min-h-screen bg-[var(--dark-gray)] text-[var(--light-gray-text)] flex flex-col font-sans"> 
+    <div className="min-h-screen bg-[var(--dark-gray)] text-[var(--light-gray-text)] flex flex-col font-sans">
       {/* Modal de Mensajes */}
       {showModal && <CustomModal message={message} onClose={closeModal} />}
 
@@ -259,31 +281,31 @@ function AppContent() {
           {/* Barra Superior */}
           <Navbar
             isConnected={isConnected}
-            address={address} 
-            balanceData={balanceData}
-            hgpBalance={formattedHgpBalance} 
-            nftCount={formattedNftCount} 
+            address={address}
+            balanceData={balanceData} // Esto incluye el .value y .symbol de BNB
+            hgpBalance={formattedHgpBalance} // Ya formateado de BigInt a string
+            nftCount={formattedNftCount} // Ya formateado a string
             connect={connect}
             connectors={connectors}
             pendingConnector={pendingConnector}
-            disconnect={disconnect} 
+            disconnect={disconnect}
           />
-          
+
           {/* Layout principal: Sidebar a la izquierda y Contenido Principal a la derecha */}
-          <div className="flex flex-1 pt-[72px]"> 
+          <div className="flex flex-1 pt-[72px]">
             {/* Sidebar Lateral */}
             <Sidebar onNavigate={setCurrentSection} currentSection={currentSection} onExpandChange={setIsSidebarExpanded} />
 
             {/* Área de Contenido Principal */}
             <main className={`flex-grow p-4 md:p-6 lg:p-8 transition-all duration-300 ease-in-out
-                              ${isSidebarExpanded ? 'ml-56 lg:ml-64' : 'ml-20 lg:ml-24'}`}> 
+                                  ${isSidebarExpanded ? 'ml-56 lg:ml-64' : 'ml-20 lg:ml-24'}`}>
               {renderCurrentSection()}
             </main>
           </div>
 
           {/* Footer */}
           <footer className={`bg-gray-900 shadow-inner p-6 text-center text-gray-300 text-sm border-t border-purple-700 transition-all duration-300 ease-in-out
-                              ${isSidebarExpanded ? 'ml-56 lg:ml-64' : 'ml-20 lg:ml-24'}`}> 
+                                  ${isSidebarExpanded ? 'ml-56 lg:ml-64' : 'ml-20 lg:ml-24'}`}>
             <p>© 2025 HighPower DApp. Todos los derechos reservados.</p>
           </footer>
         </>
