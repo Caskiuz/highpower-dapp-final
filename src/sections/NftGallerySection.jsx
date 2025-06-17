@@ -2,16 +2,16 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 
 // Importa la configuración de tu contrato NFT desde el archivo centralizado
-import { NFT_CONTRACT_CONFIG } from '../constants/contract-config.js'; // Ruta correcta relativa a src/sections/
+import { NFT_CONTRACT_CONFIG } from '../constants/contract-config.js';
 
 function NftGallerySection({
   isConnected,
   userAddress,
-  nftCount, // Esto ahora es un BigInt, se formateará aquí si es necesario
-  refetchNftBalance, 
-  showCustomModal // Importa la función del modal para usarla
+  nftCount,
+  refetchNftBalance,
+  showCustomModal
 }) {
-  const [activeTab, setActiveTab] = useState('gallery'); // 'gallery', 'mint'
+  const [activeTab, setActiveTab] = useState('gallery');
 
   // --- LECTURA DE DATOS REALES DE NFT ---
   const { data: nftTotalSupply, refetch: refetchNFTTotalSupply } = useReadContract({
@@ -19,7 +19,7 @@ function NftGallerySection({
     functionName: 'totalSupply',
     query: {
       enabled: isConnected && !!NFT_CONTRACT_CONFIG.address,
-      watch: true, // Observar cambios en el total supply
+      watch: true,
     }
   });
 
@@ -28,9 +28,28 @@ function NftGallerySection({
     functionName: 'owner', // Asume que tu contrato NFT tiene una función 'owner()'
     query: {
       enabled: isConnected && !!NFT_CONTRACT_CONFIG.address,
-      staleTime: Infinity,
     }
   });
+
+  // Normalizar las direcciones a minúsculas para una comparación consistente
+  const normalizedUserAddress = userAddress ? userAddress.toLowerCase() : '';
+  const normalizedNftOwner = nftOwner ? nftOwner.toLowerCase() : '';
+
+  // Depuración: Loggea las direcciones y el resultado de la comparación
+  useEffect(() => {
+    console.log("--- Depuración NFT Owner ---");
+    console.log("Usuario Conectado (normalizedUserAddress):", normalizedUserAddress);
+    console.log("Propietario del Contrato NFT (normalizedNftOwner):", normalizedNftOwner);
+    console.log("¿userAddress es el propietario?:", normalizedUserAddress === normalizedNftOwner);
+    console.log("--- Fin Depuración NFT Owner ---");
+  }, [normalizedUserAddress, normalizedNftOwner]);
+
+  // Depuración: Loggea el total supply
+  useEffect(() => {
+    console.log("--- Depuración NFT Total Supply ---");
+    console.log("Total de NFTs Acuñados (nftTotalSupply):", nftTotalSupply !== undefined ? Number(nftTotalSupply) : 'Cargando...');
+    console.log("--- Fin Depuración NFT Total Supply ---");
+  }, [nftTotalSupply]);
 
 
   // --- FUNCIONES DE ESCRITURA REALES (WAGMI) ---
@@ -53,7 +72,7 @@ function NftGallerySection({
       showCustomModal('NFT acuñado exitosamente!');
       refetchNFTTotalSupply(); // Actualizar total de NFTs
       refetchNftBalance();     // Actualizar el balance de NFTs del usuario
-      setMintNFTTxHash(null);
+      setMintNFTTxHash(null);  // Limpiar el hash de la transacción
     }
   }, [isMintNFTSuccess, refetchNFTTotalSupply, refetchNftBalance, showCustomModal]);
 
@@ -64,31 +83,38 @@ function NftGallerySection({
       return;
     }
     if (!NFT_CONTRACT_CONFIG.address) {
-        showCustomModal('La dirección del contrato NFT no está configurada.');
-        return;
+      showCustomModal('La dirección del contrato NFT no está configurada.');
+      return;
+    }
+    
+    // Verificación final antes de intentar la acuñación
+    if (normalizedUserAddress !== normalizedNftOwner) {
+      showCustomModal('Error: No eres el propietario del contrato NFT para acuñar.');
+      console.error("Intento de acuñación denegado: userAddress no coincide con nftOwner.");
+      return;
     }
 
     try {
-      writeMintNFT({
+      await writeMintNFT({
         address: NFT_CONTRACT_CONFIG.address,
         abi: NFT_CONTRACT_CONFIG.abi,
         functionName: 'safeMint',
-        args: [userAddress], // Acuña el NFT al usuario conectado
+        args: [userAddress],
       }, {
         onSuccess: (hash) => {
           setMintNFTTxHash(hash);
           showCustomModal(`Transacción de acuñación de NFT enviada! Hash: ${hash.substring(0, 10)}...`);
         },
         onError: (err) => {
-          console.error("Error al acuñar NFT:", err);
+          console.error("Error al acuñar NFT (on Error):", err);
           showCustomModal(`Error al acuñar NFT: ${err.message}`);
         }
       });
     } catch (error) {
-      console.error("Error inesperado al acuñar NFT:", error);
+      console.error("Error inesperado al acuñar NFT (Try-Catch):", error);
       showCustomModal(`Error inesperado al acuñar NFT: ${error.message}`);
     }
-  }, [isConnected, userAddress, writeMintNFT, showCustomModal]);
+  }, [isConnected, userAddress, normalizedUserAddress, normalizedNftOwner, writeMintNFT, showCustomModal]);
 
   const isAnyTxPending = mintNFTPending || isMintingNFT;
 
@@ -148,15 +174,11 @@ function NftGallerySection({
               <div className="mt-8">
                 {Number(nftCount) > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {/* Aquí iría la lógica para mostrar los IDs de los NFTs reales del usuario.
-                        Esto requeriría iterar sobre los IDs de los NFTs que posee el usuario,
-                        lo cual a menudo implica funciones adicionales en el contrato NFT (ej. tokenOfOwnerByIndex).
-                        Por simplicidad, mostramos un placeholder por ahora. */}
                     {Array.from({ length: Number(nftCount) > 3 ? 3 : Number(nftCount) }).map((_, index) => (
                       <div key={index} className="bg-gray-900 rounded-lg overflow-hidden shadow-lg border border-purple-700">
-                        <img 
-                          src={`https://placehold.co/400x400/8A2BE2/FFFFFF?text=NFT+HighPower+${index + 1}`} 
-                          alt={`HighPower NFT ${index + 1}`} 
+                        <img
+                          src={`https://placehold.co/400x400/8A2BE2/FFFFFF?text=NFT+HighPower+${index + 1}`}
+                          alt={`HighPower NFT ${index + 1}`}
                           className="w-full h-auto object-cover"
                           onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/400x400/808080/FFFFFF?text=Error+Loading+NFT'; }}
                         />
@@ -191,15 +213,15 @@ function NftGallerySection({
               </p>
               <button
                 onClick={handleMintNFT}
-                disabled={isAnyTxPending || userAddress !== nftOwner} // Deshabilita si no eres el propietario
+                disabled={isAnyTxPending || normalizedUserAddress !== normalizedNftOwner}
                 className={`w-full bg-[var(--accent-green)] hover:bg-[var(--secondary-blue)] text-[var(--dark-gray)] font-bold py-3 px-8 rounded-full text-xl
                             transition duration-300 ease-in-out transform hover:scale-105 shadow-xl flex items-center justify-center
-                            ${isAnyTxPending || userAddress !== nftOwner ? 'opacity-70 cursor-not-allowed' : ''}`}
+                            ${isAnyTxPending || normalizedUserAddress !== normalizedNftOwner ? 'opacity-70 cursor-not-allowed' : ''}`}
               >
-                {isMintingNFT ? <i className="fas fa-spinner fa-spin mr-3"></i> : <i className="fas fa-magic mr-3"></i>}
-                {isMintingNFT ? 'Acuñando...' : 'Acuñar NFT'}
+                {isAnyTxPending ? <i className="fas fa-spinner fa-spin mr-3"></i> : <i className="fas fa-magic mr-3"></i>}
+                {isAnyTxPending ? 'Acuñando...' : 'Acuñar NFT'}
               </button>
-              {userAddress !== nftOwner && (
+              {normalizedUserAddress !== normalizedNftOwner && (
                   <p className="text-red-400 text-sm mt-4">
                       No eres el propietario del contrato NFT. Solo el propietario puede acuñar en esta versión de demostración.
                   </p>
