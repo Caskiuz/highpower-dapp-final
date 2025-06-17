@@ -4,19 +4,23 @@ import {
   useAccount,
   useBalance,
   useReadContract,
-  useWriteContract,
-  useWaitForTransactionReceipt,
   useConnect,
   useDisconnect,
 } from 'wagmi';
-import { bsc, bscTestnet, mainnet, sepolia } from 'wagmi/chains'; 
-import { formatUnits } from 'viem'; 
+import { bscTestnet } from 'wagmi/chains'; // Solo necesitamos bscTestnet para el publicClient
 
-// Importa los ABIs de tus contratos
-import MyNFTABI from './abis/MyNFT.json';
-import SimpleTokenABI from './abis/SimpleToken.json';
+// Importa todas las configuraciones de contratos desde nuestro archivo centralizado
+import {
+  HGP_TOKEN_CONFIG,
+  NFT_CONTRACT_CONFIG,
+  STAKING_CONTRACT_CONFIG,
+  DAO_CONTRACT_CONFIG,
+  UI_PROPOSAL_THRESHOLD_HGP // También se exporta para uso general si es necesario en la UI
+} from "./constants/contract-config.js"; // Ruta correcta: ./constants/contract-config.js
 
-// Importa los componentes y secciones
+import { formatUnits, createPublicClient, http } from 'viem';
+
+// Importa tus componentes y secciones (tal como los tenías)
 import CursorTrail from './components/CursorTrail';
 import CustomModal from './components/CustomModal';
 import Navbar from './components/Navbar'; 
@@ -41,11 +45,13 @@ import FAQSection from './sections/FAQSection';
 import NewsAnnouncementsSection from './sections/NewsAnnouncementsSection';
 import IncubationSection from './sections/IncubationSection';
 
-// --- Constantes de Contratos (EXPORTADAS para acceso desde otros componentes) ---
-export const HGP_ERC20_ADDRESS = '0x03Fd2cE62B4BB54f09716f9588A5E13bC0756773'; 
-export const HPNFT_ERC721_ADDRESS = '0x11Cae128d6AD9A00ceAF179171321F2E0abE30a8'; 
-export const HGP_STAKING_ADDRESS = '0x3D4E5F6A7B8C9D0E1F2A3B4C5D6E7F8A9B0C1D2E'; 
-export const HGP_DAO_ADDRESS = '0x4E5F6A7B8C9D0E1F2A3B4C5D6E7F8A9B0C1D2F';
+
+// Configuración de un cliente público de Viem para llamadas de lectura directas
+// Útil para llamadas que no necesitan un wallet conectado (ej: total supply, propuestas DAO)
+const publicClient = createPublicClient({
+  chain: bscTestnet,
+  transport: http(bscTestnet.rpcUrls.default.http[0]),
+});
 
 
 function AppContent() {
@@ -64,120 +70,7 @@ function AppContent() {
   const { connect, connectors, pendingConnector } = useConnect();
   const { disconnect } = useDisconnect();
 
-  useEffect(() => {
-    console.log("Estado de la conexión (desde AppContent):", { address, isConnected, chain });
-    if (address) {
-      console.log("  Dirección de HGP ERC20 configurada:", HGP_ERC20_ADDRESS);
-      console.log("  Dirección de HPNFT ERC721 configurada:", HPNFT_ERC721_ADDRESS);
-    }
-  }, [address, isConnected, chain]);
-
-  const mockNftMint = () => {
-    return new Promise(resolve => {
-      setTimeout(() => {
-        console.log("Simulando minting de NFT...");
-        resolve({ hash: '0xmocknftmint123' + Math.random().toString(16).substring(2, 10) });
-      }, 2000);
-    });
-  };
-
-  const mockStakeHGP = () => {
-    return new Promise(resolve => {
-      setTimeout(() => {
-        console.log("Simulando staking de HGP...");
-        resolve({ hash: '0xmockstakehgp123' + Math.random().toString(16).substring(2, 10) });
-      }, 2000);
-    });
-  };
-
-  const mockUnstakeHGP = () => {
-    return new Promise(resolve => {
-      setTimeout(() => {
-        console.log("Simulando unstaking de HGP...");
-        resolve({ hash: '0xmockunstakehgp123' + Math.random().toString(16).substring(2, 10) });
-      }, 2000);
-    });
-  };
-
-  const mockClaimRewards = () => {
-    return new Promise(resolve => {
-      setTimeout(() => {
-        console.log("Simulando reclamación de recompensas...");
-        resolve({ hash: '0xmockclaimrewards123' + Math.random().toString(16).substring(2, 10) });
-      }, 2000);
-    });
-  };
-
-  const mockCreateProposal = () => {
-    return new Promise(resolve => {
-      setTimeout(() => {
-        console.log("Simulando creación de propuesta DAO...");
-        resolve({ hash: '0xmockproposaal123' + Math.random().toString(16).substring(2, 10) });
-      }, 2000);
-    });
-  };
-
-  const mockVoteProposal = () => {
-    return new Promise(resolve => {
-      setTimeout(() => {
-        console.log("Simulando votación de propuesta DAO...");
-        resolve({ hash: '0xmockvote123' + Math.random().toString(16).substring(2, 10) });
-      }, 2000);
-    });
-  };
-
-
-  const { data: nftBalanceData, refetch: refetchNftBalance } = useReadContract({
-    abi: MyNFTABI.abi, 
-    address: HPNFT_ERC721_ADDRESS, 
-    functionName: 'balanceOf',
-    args: [address],
-    query: {
-      enabled: isConnected && !!address,
-      watch: true, 
-    },
-  });
-
-  const { data: hgpTokenBalanceData, refetch: refetchHGPBalance } = useReadContract({
-    abi: SimpleTokenABI.abi, 
-    address: HGP_ERC20_ADDRESS, 
-    functionName: 'balanceOf',
-    args: [address],
-    query: {
-      enabled: isConnected && !!address,
-      watch: true, 
-    },
-  });
-
-  const { data: hgpDecimalsData } = useReadContract({
-    abi: SimpleTokenABI.abi,
-    address: HGP_ERC20_ADDRESS,
-    functionName: 'decimals',
-    query: {
-      enabled: isConnected && !!address,
-      staleTime: Infinity, 
-    },
-  });
-
-  const { data: hgpTotalSupplyData } = useReadContract({
-    abi: SimpleTokenABI.abi,
-    address: HGP_ERC20_ADDRESS,
-    functionName: 'totalSupply',
-    query: {
-      enabled: isConnected && !!address,
-      staleTime: Infinity, 
-    },
-  });
-
-  useEffect(() => {
-    console.log("Datos de Contratos (después de Wagmi hooks):", { balanceData, hgpTokenBalanceData, hgpDecimalsData, hgpTotalSupplyData, nftBalanceData });
-  }, [balanceData, hgpTokenBalanceData, nftBalanceData, hgpDecimalsData, hgpTotalSupplyData]);
-
-  const { data: hash, isPending: isMinting, writeContract } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess: isConfirmed, error: confirmError } = useWaitForTransactionReceipt({
-    hash: hash,
-  });
-
+  // Estados y funciones para el modal personalizado
   const [message, setMessage] = useState('');
   const [showModal, setShowModal] = useState(false);
 
@@ -191,58 +84,99 @@ function AppContent() {
     setMessage('');
   }, []);
 
-  useEffect(() => {
-    if (isConfirmed) {
-      showCustomModal('¡Transacción completada con éxito!');
-    } else if (confirmError) {
-      showCustomModal(`Error en la transacción: ${confirmError.shortMessage || confirmError.message}`);
-    }
-  }, [isConfirmed, confirmError, showCustomModal]);
+
+  // --- Lectura de datos de contrato (HGP Token y NFT) directamente en App.jsx para pasar a Navbar/Dashboard ---
+  // HGP Token Balance del usuario
+  const { data: hgpTokenBalanceData, refetch: refetchHGPBalance } = useReadContract({
+    ...HGP_TOKEN_CONFIG, // Usa la configuración del archivo centralizado
+    functionName: 'balanceOf',
+    args: [address],
+    query: {
+      enabled: isConnected && !!address,
+      watch: true, 
+    },
+  });
+
+  // Decimals del token HGP
+  const { data: hgpDecimalsData } = useReadContract({
+    ...HGP_TOKEN_CONFIG,
+    functionName: 'decimals',
+    query: {
+      enabled: isConnected && !!address,
+      staleTime: Infinity, 
+    },
+  });
+
+  // Total Supply del token HGP
+  const { data: hgpTotalSupplyData } = useReadContract({
+    ...HGP_TOKEN_CONFIG,
+    functionName: 'totalSupply',
+    query: {
+      enabled: isConnected, // No necesita address conectado, solo que haya conexión a la red
+      staleTime: Infinity, 
+    },
+  });
+
+  // Balance de NFTs del usuario
+  const { data: nftBalanceData, refetch: refetchNftBalance } = useReadContract({
+    ...NFT_CONTRACT_CONFIG, // Usa la configuración del archivo centralizado
+    functionName: 'balanceOf',
+    args: [address],
+    query: {
+      enabled: isConnected && !!address,
+      watch: true, 
+    },
+  });
 
   useEffect(() => {
+    console.log("Estado de la conexión (desde AppContent):", { address, isConnected, chain });
+    // Aquí puedes loguear las direcciones desde HGP_TOKEN_CONFIG, etc.
+    console.log("  Dirección de HGP ERC20 configurada:", HGP_TOKEN_CONFIG.address);
+    console.log("  Dirección de HPNFT ERC721 configurada:", NFT_CONTRACT_CONFIG.address);
+    console.log("  Dirección de HGP Staking configurada:", STAKING_CONTRACT_CONFIG.address);
+    console.log("  Dirección de HGP DAO configurada:", DAO_CONTRACT_CONFIG.address);
+
     if (isConnected && address) {
       refetchHGPBalance();
       refetchNftBalance();
     }
-  }, [isConnected, address, refetchHGPBalance, refetchNftBalance]);
+  }, [address, isConnected, chain, refetchHGPBalance, refetchNftBalance]);
 
-  const handleLaunchDapp = useCallback(() => {
-    setCurrentSection('news-announcements'); 
-  }, []);
-
-  // Mover la definición de estas variables al ámbito superior de AppContent
+  // Formatear los datos para la UI
   const decimals = hgpDecimalsData !== undefined ? Number(hgpDecimalsData) : 18;
   const formattedHgpBalance = hgpTokenBalanceData !== undefined ? formatUnits(hgpTokenBalanceData, decimals) : '0.0';
   const formattedTotalHGPSupply = hgpTotalSupplyData !== undefined ? formatUnits(hgpTotalSupplyData, decimals) : 'Cargando...';
   const formattedNftCount = nftBalanceData !== undefined ? nftBalanceData.toString() : '0';
 
 
+  const handleLaunchDapp = useCallback(() => {
+    setCurrentSection('news-announcements'); 
+  }, []);
+
   const renderCurrentSection = () => {
-    // Estas variables ya están definidas en el ámbito superior, no se necesita re-declarar aquí.
+    // Props comunes para todas las secciones que interactúan con la blockchain
     const commonSectionProps = {
       isConnected,
+      userAddress: address, // Renombrado a userAddress para mayor claridad en secciones
       onNavigate: setCurrentSection,
       showCustomModal,
-      writeContract,
-      isMinting,
-      isConfirming,
-      hash,
-      confirmError,
+      // Pasa las configuraciones completas de los contratos
+      hgpTokenConfig: HGP_TOKEN_CONFIG,
+      nftContractConfig: NFT_CONTRACT_CONFIG,
+      stakingContractConfig: STAKING_CONTRACT_CONFIG,
+      daoContractConfig: DAO_CONTRACT_CONFIG,
+      uiProposalThreshold: UI_PROPOSAL_THRESHOLD_HGP,
+      publicClient, // Pasa el cliente público para llamadas de lectura
+      
+      // Datos de balance y recarga (pasados como BigInt, las secciones los formatearán si es necesario)
+      hgpBalance: hgpTokenBalanceData, 
+      refetchHGPBalance,
+      nftCount: nftBalanceData, 
       refetchNftBalance,
-      isConfirmed,
-      address,
-      balanceData,
-      hgpBalance: formattedHgpBalance,
-      nftCount: formattedNftCount,
-      totalHGPSupply: formattedTotalHGPSupply,
-      HGP_ERC20_ADDRESS,
-      HPNFT_ERC721_ADDRESS,
-      mockMintNFT: mockNftMint,
-      mockStakeHGP,
-      mockUnstakeHGP,
-      mockClaimRewards,
-      mockCreateProposal,
-      mockVoteProposal,
+
+      // Otros datos generales de la DApp
+      balanceData, // Balance nativo de la cadena (BNB)
+      totalHGPSupply: formattedTotalHGPSupply, // Total supply ya formateado
     };
 
     switch (currentSection) {
@@ -327,11 +261,12 @@ function AppContent() {
             isConnected={isConnected}
             address={address} 
             balanceData={balanceData}
-            hgpBalance={formattedHgpBalance} // Usar la variable formateada directamente
-            nftCount={formattedNftCount} // Usar la variable formateada directamente
+            hgpBalance={formattedHgpBalance} 
+            nftCount={formattedNftCount} 
             connect={connect}
             connectors={connectors}
             pendingConnector={pendingConnector}
+            disconnect={disconnect} 
           />
           
           {/* Layout principal: Sidebar a la izquierda y Contenido Principal a la derecha */}

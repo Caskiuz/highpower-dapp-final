@@ -1,199 +1,115 @@
-// src/sections/NftGallerySection.jsx
 import React, { useState, useEffect, useCallback } from 'react';
+import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 
-// Secciones del Marketplace: Gallery, Mint, Sell (listar), Buy
+// Importa la configuración de tu contrato NFT desde el archivo centralizado
+import { NFT_CONTRACT_CONFIG } from '../constants/contract-config.js'; // Ruta correcta relativa a src/sections/
+
 function NftGallerySection({
   isConnected,
-  address,
-  nftCount,
-  showCustomModal,
-  mockMintNFT, // Función simulada para minting
-  refetchNftBalance,
-  isMinting, // Estado de minting de App.jsx
-  isConfirming, // Estado de confirmación de App.jsx
-  hash, // Hash de transacción de App.jsx
-  confirmError // Error de confirmación de App.jsx
+  userAddress,
+  nftCount, // Esto ahora es un BigInt, se formateará aquí si es necesario
+  refetchNftBalance, 
+  showCustomModal // Importa la función del modal para usarla
 }) {
-  const [activeTab, setActiveTab] = useState('marketplace'); // Pestaña activa: 'marketplace', 'your-nfts', 'mint'
+  const [activeTab, setActiveTab] = useState('gallery'); // 'gallery', 'mint'
 
-  // Simulación de NFTs del usuario (solo para UI)
-  const [userNfts, setUserNfts] = useState([]);
-  // Simulación de NFTs en el marketplace (solo para UI)
-  const [marketplaceNfts, setMarketplaceNfts] = useState([]);
+  // --- LECTURA DE DATOS REALES DE NFT ---
+  const { data: nftTotalSupply, refetch: refetchNFTTotalSupply } = useReadContract({
+    ...NFT_CONTRACT_CONFIG,
+    functionName: 'totalSupply',
+    query: {
+      enabled: isConnected && !!NFT_CONTRACT_CONFIG.address,
+      watch: true, // Observar cambios en el total supply
+    }
+  });
 
-  // Mock de NFTs disponibles para el marketplace y minteo
+  const { data: nftOwner, refetch: refetchNFTOwner } = useReadContract({
+    ...NFT_CONTRACT_CONFIG,
+    functionName: 'owner', // Asume que tu contrato NFT tiene una función 'owner()'
+    query: {
+      enabled: isConnected && !!NFT_CONTRACT_CONFIG.address,
+      staleTime: Infinity,
+    }
+  });
+
+
+  // --- FUNCIONES DE ESCRITURA REALES (WAGMI) ---
+  const { writeContract: writeMintNFT, isPending: mintNFTPending, error: mintNFTError } = useWriteContract();
+
+  // --- ESTADOS DE TRANSACCIONES (HASH Y CONFIRMACIÓN) ---
+  const [mintNFTTxHash, setMintNFTTxHash] = useState(null);
+
+  const { isLoading: isMintingNFT, isSuccess: isMintNFTSuccess, isError: isMintNFTError } = useWaitForTransactionReceipt({
+    hash: mintNFTTxHash,
+  });
+
+  // --- MANEJO DE EFECTOS POST-TRANSACCIÓN Y ERRORES CON CUSTOM MODAL ---
   useEffect(() => {
-    // Generar algunos NFTs iniciales para el marketplace
-    const initialMarketplaceNfts = Array.from({ length: 9 }).map((_, i) => ({
-      id: `nft-market-${i + 1}`,
-      name: `HighPower Gem #${i + 1}`,
-      imageUrl: `https://placehold.co/300x300/${['8A2BE2', '4169E1', '00FF7F', 'FFD700'][i % 4]}/FFFFFF?text=NFT+${i + 1}`,
-      price: (Math.random() * 0.5 + 0.1).toFixed(3), // Precio en BNB simulado
-      owner: `0xSimulatedOwner${i + 1}....`,
-      description: `Un NFT coleccionable único de la serie HighPower Gems. Potencia tu presencia en el ecosistema.`,
-      listed: true,
-    }));
-    setMarketplaceNfts(initialMarketplaceNfts);
+    if (mintNFTError) showCustomModal(`Error al acuñar NFT: ${mintNFTError.message}`);
+  }, [mintNFTError, showCustomModal]);
 
-    // Si el usuario está conectado, simular que tiene algunos NFTs
-    if (isConnected) {
-        const initialUserNfts = Array.from({ length: nftCount > 0 ? nftCount : 1 }).map((_, i) => ({ // Asegurarse de que al menos haya 1 si nftCount es 0
-            id: `nft-user-${i + 1}`,
-            name: `Tu Power NFT #${i + 1}`,
-            imageUrl: `https://placehold.co/300x300/${['6B46C1', '4299E1', '6EE7B7'][i % 3]}/000000?text=My+NFT+${i + 1}`,
-            description: `Este es uno de tus NFTs HighPower coleccionables.`,
-            listed: false,
-        }));
-        setUserNfts(initialUserNfts);
-    } else {
-        setUserNfts([]);
+  useEffect(() => {
+    if (isMintNFTSuccess) {
+      showCustomModal('NFT acuñado exitosamente!');
+      refetchNFTTotalSupply(); // Actualizar total de NFTs
+      refetchNftBalance();     // Actualizar el balance de NFTs del usuario
+      setMintNFTTxHash(null);
     }
-  }, [isConnected, nftCount]);
+  }, [isMintNFTSuccess, refetchNFTTotalSupply, refetchNftBalance, showCustomModal]);
 
-  // Manejar el minteo de un nuevo NFT (simulado)
-  const handleMintNft = useCallback(async () => {
-    if (!isConnected) {
-      showCustomModal("Por favor, conecta tu billetera para acuñar un NFT.");
+  // --- HANDLERS DE INTERACCIÓN REAL ---
+  const handleMintNFT = useCallback(async () => {
+    if (!isConnected || !userAddress) {
+      showCustomModal('Por favor, conecta tu billetera para acuñar un NFT.');
       return;
     }
+    if (!NFT_CONTRACT_CONFIG.address) {
+        showCustomModal('La dirección del contrato NFT no está configurada.');
+        return;
+    }
 
-    showCustomModal("Iniciando acuñación de NFT (simulado)... Por favor, confirma en tu billetera.");
     try {
-      // Simular la llamada a la función de acuñación
-      const tx = await mockMintNFT(); 
-      console.log("Transacción de acuñación simulada enviada:", tx.hash);
-      showCustomModal(`Transacción enviada: ${tx.hash.substring(0, 10)}... Confirmando...`);
-
-      setTimeout(() => {
-        showCustomModal("¡NFT acuñado con éxito! (Simulado)");
-        // Simular que el usuario ahora tiene 1 NFT más
-        const newNft = {
-          id: `nft-user-${userNfts.length + 1}`,
-          name: `Tu Nuevo NFT Power #${userNfts.length + 1}`,
-          imageUrl: `https://placehold.co/300x300/${['6B46C1', '4299E1', '6EE7B7'][userNfts.length % 3]}/000000?text=My+New+NFT`,
-          description: `¡Acabas de acuñar este impresionante NFT HighPower!`,
-          listed: false,
-        };
-        setUserNfts(prev => [...prev, newNft]);
-        if (refetchNftBalance) refetchNftBalance(); // Intenta refetch si la función real existe
-      }, 3000); // Simula 3 segundos para confirmación
+      writeMintNFT({
+        address: NFT_CONTRACT_CONFIG.address,
+        abi: NFT_CONTRACT_CONFIG.abi,
+        functionName: 'safeMint',
+        args: [userAddress], // Acuña el NFT al usuario conectado
+      }, {
+        onSuccess: (hash) => {
+          setMintNFTTxHash(hash);
+          showCustomModal(`Transacción de acuñación de NFT enviada! Hash: ${hash.substring(0, 10)}...`);
+        },
+        onError: (err) => {
+          console.error("Error al acuñar NFT:", err);
+          showCustomModal(`Error al acuñar NFT: ${err.message}`);
+        }
+      });
     } catch (error) {
-      console.error("Error al acuñar NFT simulado:", error);
-      showCustomModal(`Error al acuñar NFT: ${error.message || "Transacción rechazada."}`);
+      console.error("Error inesperado al acuñar NFT:", error);
+      showCustomModal(`Error inesperado al acuñar NFT: ${error.message}`);
     }
-  }, [isConnected, showCustomModal, mockMintNFT, userNfts.length, refetchNftBalance]);
+  }, [isConnected, userAddress, writeMintNFT, showCustomModal]);
 
-  // Simular la compra de un NFT del marketplace
-  const handleBuyNft = useCallback((nftId, price) => {
-    if (!isConnected) {
-      showCustomModal("Conecta tu billetera para comprar NFTs.");
-      return;
-    }
-    showCustomModal(`Comprando NFT ${nftId} por ${price} BNB (simulado)...`);
-    // Lógica para simular la compra y mover el NFT al usuario
-    setTimeout(() => {
-        setMarketplaceNfts(prev => prev.filter(nft => nft.id !== nftId));
-        const purchasedNft = marketplaceNfts.find(nft => nft.id === nftId);
-        if (purchasedNft) {
-            setUserNfts(prev => [...prev, { ...purchasedNft, listed: false, id: `user-${purchasedNft.id}` }]);
-            showCustomModal(`¡NFT ${nftId} comprado con éxito! (Simulado)`);
-            if (refetchNftBalance) refetchNftBalance();
-        }
-    }, 2000);
-  }, [isConnected, showCustomModal, marketplaceNfts, refetchNftBalance]);
-
-  // Simular el listado de un NFT propio
-  const handleListNft = useCallback((nftId) => {
-    showCustomModal(`Listando NFT ${nftId} en el marketplace (simulado)...`);
-    setTimeout(() => {
-        setUserNfts(prev => prev.map(nft => 
-            nft.id === nftId ? { ...nft, listed: true } : nft
-        ));
-        const listedNft = userNfts.find(nft => nft.id === nftId);
-        if (listedNft) {
-             setMarketplaceNfts(prev => [...prev, { ...listedNft, listed: true, id: `market-${listedNft.id}` }]);
-             showCustomModal(`¡NFT ${nftId} listado con éxito! (Simulado)`);
-        }
-    }, 2000);
-  }, [showCustomModal, userNfts]);
-
-  // Simular la des-listado de un NFT propio
-  const handleDelistNft = useCallback((nftId) => {
-    showCustomModal(`Deslistando NFT ${nftId} del marketplace (simulado)...`);
-    setTimeout(() => {
-        setUserNfts(prev => prev.map(nft => 
-            nft.id === nftId ? { ...nft, listed: false } : nft
-        ));
-        setMarketplaceNfts(prev => prev.filter(nft => nft.id !== `market-${nftId}`));
-        showCustomModal(`¡NFT ${nftId} deslistado con éxito! (Simulado)`);
-    }, 2000);
-  }, [showCustomModal]);
-
-
-  const NftCard = ({ nft, onAction, actionLabel, isUserNft = false }) => {
-    const isListed = nft.listed;
-    return (
-      <div className="bg-gray-900 p-4 rounded-xl shadow-md border border-gray-700 flex flex-col items-center justify-between transition-transform duration-200 hover:scale-103 hover:border-[var(--secondary-blue)]">
-        <img src={nft.imageUrl} alt={nft.name} className="w-full h-48 object-cover rounded-lg mb-4 border border-gray-600" />
-        <h3 className="text-xl font-bold text-[var(--off-white)] mb-2 text-center">{nft.name}</h3>
-        <p className="text-gray-400 text-sm mb-2 text-center overflow-hidden h-12">{nft.description}</p>
-        
-        {isUserNft && !isListed && (
-            <button
-                onClick={() => onAction(nft.id)}
-                className="mt-4 w-full bg-[var(--primary-purple)] hover:bg-[var(--secondary-blue)] text-white font-bold py-2 px-4 rounded-lg transition duration-300 transform hover:scale-105 shadow-md"
-            >
-                Listar en Marketplace
-            </button>
-        )}
-        {isUserNft && isListed && (
-            <button
-                onClick={() => onAction(nft.id)}
-                className="mt-4 w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 transform hover:scale-105 shadow-md"
-            >
-                Deslistar
-            </button>
-        )}
-        {!isUserNft && ( // Es un NFT del marketplace
-            <>
-                <p className="text-[var(--accent-green)] font-bold text-xl mb-4">{nft.price} BNB</p>
-                <button
-                    onClick={() => onAction(nft.id, nft.price)}
-                    className="w-full bg-[var(--accent-green)] hover:bg-[var(--primary-purple)] text-[var(--dark-gray)] font-bold py-2 px-4 rounded-lg transition duration-300 transform hover:scale-105 shadow-md"
-                >
-                    Comprar Ahora
-                </button>
-            </>
-        )}
-      </div>
-    );
-  };
+  const isAnyTxPending = mintNFTPending || isMintingNFT;
 
   return (
-    <section id="nfts" className="p-8 bg-[var(--dark-gray)] rounded-3xl shadow-xl space-y-8 text-center border-2 border-[var(--accent-yellow)]">
-      <h2 className="text-4xl font-bold text-[var(--accent-yellow)] mb-6">HighPower Metamarket & Galería NFT</h2>
+    <section id="nfts" className="p-8 bg-[var(--dark-gray)] rounded-3xl shadow-xl space-y-8 text-center border-2 border-[var(--primary-purple)]">
+      <h2 className="text-4xl font-bold text-[var(--primary-purple)] mb-6">Galería y Acuñación de NFTs HighPower</h2>
       <p className="text-[var(--light-gray-text)] text-lg mb-8">
-        Explora y colecciona NFTs únicos en nuestro Metamarket, o acuña tus propios activos digitales.
+        Explora y gestiona tus exclusivos NFTs de HighPower. ¡Acuña el tuyo ahora!
       </p>
 
       {/* Pestañas de navegación */}
       <div className="flex justify-center mb-8 bg-gray-900 p-2 rounded-full shadow-inner border border-gray-700">
         <button
-          className={`py-2 px-6 rounded-full font-semibold transition-all duration-300 
-                      ${activeTab === 'marketplace' ? 'bg-[var(--primary-purple)] text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
-          onClick={() => setActiveTab('marketplace')}
+          className={`py-2 px-6 rounded-full font-semibold transition-all duration-300
+                      ${activeTab === 'gallery' ? 'bg-[var(--primary-purple)] text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+          onClick={() => setActiveTab('gallery')}
         >
-          Marketplace
+          Mi Galería
         </button>
         <button
-          className={`py-2 px-6 rounded-full font-semibold transition-all duration-300 
-                      ${activeTab === 'your-nfts' ? 'bg-[var(--primary-purple)] text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
-          onClick={() => setActiveTab('your-nfts')}
-        >
-          Tus NFTs
-        </button>
-        <button
-          className={`py-2 px-6 rounded-full font-semibold transition-all duration-300 
+          className={`py-2 px-6 rounded-full font-semibold transition-all duration-300
                       ${activeTab === 'mint' ? 'bg-[var(--primary-purple)] text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
           onClick={() => setActiveTab('mint')}
         >
@@ -201,224 +117,97 @@ function NftGallerySection({
         </button>
       </div>
 
-      {/* Contenido de las pestañas */}
-      {activeTab === 'marketplace' && (
-        <div className="bg-gray-800 p-6 rounded-3xl shadow-xl border border-[var(--secondary-blue)]">
-          <h3 className="text-3xl font-bold text-[var(--off-white)] mb-6">NFTs en Venta</h3>
-          <p className="text-gray-400 mb-6">Descubre colecciones únicas y adquiere activos digitales raros.</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {marketplaceNfts.length > 0 ? (
-              marketplaceNfts.map(nft => (
-                <NftCard key={nft.id} nft={nft} onAction={handleBuyNft} actionLabel="Comprar" />
-              ))
-            ) : (
-              <p className="col-span-full text-center text-gray-500">No hay NFTs listados en el marketplace en este momento.</p>
-            )}
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'your-nfts' && (
-        <div className="bg-gray-800 p-6 rounded-3xl shadow-xl border border-[var(--primary-purple)]">
-          <h3 className="text-3xl font-bold text-[var(--off-white)] mb-6">Tu Colección de NFTs</h3>
-          <p className="text-gray-400 mb-6">Aquí se muestran los NFTs de tu billetera. Puedes listarlos para venderlos.</p>
-          {!isConnected && (
-              <p className="text-red-400 mb-4">Conecta tu billetera para ver tus NFTs.</p>
-          )}
-          {isConnected && userNfts.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {userNfts.map(nft => (
-                    <NftCard key={nft.id} nft={nft} onAction={nft.listed ? handleDelistNft : handleListNft} isUserNft={true} />
-                ))}
-            </div>
-          ) : isConnected ? (
-            <p className="text-gray-500 text-center">Aún no tienes NFTs HighPower. ¡Acuña uno ahora!</p>
-          ) : null}
-        </div>
-      )}
-
-      {activeTab === 'mint' && (
-        <div className="bg-gray-800 p-6 rounded-3xl shadow-xl border border-[var(--accent-green)]">
-          <h3 className="text-3xl font-bold text-[var(--off-white)] mb-6">Acuñar Nuevo HighPower NFT</h3>
-          <p className="text-gray-400 mb-6">
-            Crea un nuevo NFT único de la colección HighPower. El coste de acuñación es simbólico en la testnet.
+      {!isConnected && (
+        <div className="bg-gray-800 p-6 rounded-3xl shadow-xl border border-red-500 text-center">
+          <p className="text-red-400 text-xl font-semibold">
+            ¡Conecta tu billetera para explorar los NFTs!
           </p>
-          <div className="flex flex-col items-center justify-center space-y-4">
-            <img 
-              src="https://placehold.co/200x200/4299E1/000000?text=Mint+New+NFT" 
-              alt="NFT por acuñar" 
-              className="w-48 h-48 rounded-xl object-cover border-4 border-[var(--accent-green)] shadow-lg" 
-            />
-            <p className="text-[var(--light-gray-text)] text-xl font-semibold">Coste de Acuñación: 0.005 BNB (Testnet)</p>
-            <button
-              onClick={handleMintNft}
-              className={`bg-[var(--accent-green)] hover:bg-[var(--secondary-blue)] text-[var(--dark-gray)] font-bold py-3 px-8 rounded-full text-xl
-                         transition duration-300 ease-in-out transform hover:scale-105 shadow-xl flex items-center justify-center
-                         ${isMinting || isConfirming ? 'opacity-70 cursor-not-allowed' : ''}`}
-              disabled={isMinting || isConfirming}
-            >
-              {isMinting ? <i className="fas fa-spinner fa-spin mr-3"></i> : <i className="fas fa-hammer mr-3"></i>}
-              {isMinting ? 'Acuñando...' : isConfirming ? 'Confirmando...' : 'Acuñar Ahora'}
-            </button>
-            {hash && (
-                <p className="text-sm text-gray-400 mt-2">
-                    Transacción Hash: <a href={`https://testnet.bscscan.com/tx/${hash}`} target="_blank" rel="noopener noreferrer" className="text-[var(--accent-green)] hover:underline">
-                        {hash.substring(0, 10)}...{hash.substring(hash.length - 8)}
-                    </a>
-                </p>
-            )}
-            {confirmError && (
-                <p className="text-red-400 text-sm mt-2">
-                    Error: {confirmError.shortMessage || confirmError.message}
-                </p>
-            )}
-          </div>
         </div>
       )}
 
-      {/* Infografía Animada de Flujo de Valor de NFTs */}
-      <div className="bg-gray-800 p-6 rounded-3xl shadow-xl border border-[var(--primary-purple)]">
-        <h3 className="text-3xl font-bold text-[var(--off-white)] mb-6">Flujo de Valor en el Ecosistema NFT</h3>
-        <p className="text-[var(--light-gray-text)] mb-8">
-          Descubre cómo las interacciones con NFTs generan valor para los creadores, compradores y el ecosistema HighPower.
-        </p>
-        <div className="relative w-full h-96 bg-gray-900 rounded-lg flex items-center justify-center overflow-hidden">
-          <svg className="absolute inset-0 w-full h-full" viewBox="0 0 800 400">
-            {/* Fondo gradiente sutil */}
-            <defs>
-              <linearGradient id="nftGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style={{stopColor: 'var(--primary-purple)', stopOpacity: 0.8}} />
-                <stop offset="50%" style={{stopColor: 'var(--accent-yellow)', stopOpacity: 0.8}} />
-                <stop offset="100%" style={{stopColor: 'var(--secondary-blue)', stopOpacity: 0.8}} />
-              </linearGradient>
-            </defs>
-            <rect x="0" y="0" width="800" height="400" fill="url(#nftGradient)" opacity="0.1" />
+      {isConnected && (
+        <>
+          {activeTab === 'gallery' && (
+            <div className="bg-gray-800 p-6 rounded-3xl shadow-xl border border-[var(--secondary-blue)]">
+              <h3 className="text-3xl font-bold text-[var(--off-white)] mb-6">Tus NFTs y Estadísticas</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center mb-6">
+                <div className="bg-gray-900 p-4 rounded-lg border border-gray-700">
+                  <p className="text-gray-400 text-sm">Total de NFTs Acuñados en el Contrato:</p>
+                  <p className="text-xl font-bold text-[var(--off-white)]">
+                    {nftTotalSupply !== undefined ? Number(nftTotalSupply) : 'Cargando...'}
+                  </p>
+                </div>
+                <div className="bg-gray-900 p-4 rounded-lg border border-gray-700">
+                  <p className="text-gray-400 text-sm">Tus NFTs Poseídos:</p>
+                  <p className="text-xl font-bold text-[var(--off-white)]">
+                    {nftCount !== undefined ? Number(nftCount) : 'Cargando...'}
+                  </p>
+                </div>
+              </div>
 
-            {/* Nodos principales */}
-            <rect x="50" y="150" width="120" height="100" rx="15" ry="15" fill="var(--secondary-blue)" opacity="0.9" stroke="var(--off-white)" strokeWidth="2" />
-            <text x="110" y="200" textAnchor="middle" fill="white" fontSize="16" fontWeight="bold">Creador/Minteo</text>
+              <div className="mt-8">
+                {Number(nftCount) > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {/* Aquí iría la lógica para mostrar los IDs de los NFTs reales del usuario.
+                        Esto requeriría iterar sobre los IDs de los NFTs que posee el usuario,
+                        lo cual a menudo implica funciones adicionales en el contrato NFT (ej. tokenOfOwnerByIndex).
+                        Por simplicidad, mostramos un placeholder por ahora. */}
+                    {Array.from({ length: Number(nftCount) > 3 ? 3 : Number(nftCount) }).map((_, index) => (
+                      <div key={index} className="bg-gray-900 rounded-lg overflow-hidden shadow-lg border border-purple-700">
+                        <img 
+                          src={`https://placehold.co/400x400/8A2BE2/FFFFFF?text=NFT+HighPower+${index + 1}`} 
+                          alt={`HighPower NFT ${index + 1}`} 
+                          className="w-full h-auto object-cover"
+                          onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/400x400/808080/FFFFFF?text=Error+Loading+NFT'; }}
+                        />
+                        <div className="p-4">
+                          <h4 className="text-xl font-semibold text-white">NFT # {index + 1}</h4>
+                          <p className="text-gray-400 text-sm">Un token de poder en el ecosistema HighPower.</p>
+                        </div>
+                      </div>
+                    ))}
+                    {Number(nftCount) > 3 && (
+                        <p className="col-span-full text-center text-gray-500 mt-4">
+                            Mostrando los primeros 3 NFTs. Posees un total de {Number(nftCount)} NFTs.
+                        </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="bg-gray-900 p-6 rounded-lg text-center border border-gray-700">
+                    <p className="text-gray-500 text-xl font-semibold">¡Aún no tienes NFTs de HighPower!</p>
+                    <p className="text-gray-400 mt-2">Dirígete a la pestaña "Acuñar NFT" para obtener el tuyo.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
-            <rect x="340" y="150" width="120" height="100" rx="15" ry="15" fill="var(--primary-purple)" opacity="0.9" stroke="var(--off-white)" strokeWidth="2" />
-            <text x="400" y="200" textAnchor="middle" fill="white" fontSize="16" fontWeight="bold">Marketplace</text>
-
-            <rect x="630" y="150" width="120" height="100" rx="15" ry="15" fill="var(--accent-green)" opacity="0.9" stroke="var(--off-white)" strokeWidth="2" />
-            <text x="690" y="200" textAnchor="middle" fill="white" fontSize="16" fontWeight="bold">Comprador/Holder</text>
-
-            <circle cx="400" cy="350" r="30" fill="var(--accent-yellow)" opacity="0.9" stroke="var(--off-white)" strokeWidth="2" />
-            <text x="400" y="355" textAnchor="middle" fill="var(--dark-gray)" fontSize="14" fontWeight="bold">Tesorería/Quema</text>
-
-
-            {/* Flujo: Creador/Minteo -> Marketplace */}
-            <path id="nftPath1" d="M170 200 H340" stroke="var(--primary-purple)" strokeWidth="4" fill="none" opacity="0.7">
-              <animateMotion
-                path="M170 200 H340"
-                dur="3s"
-                repeatCount="indefinite"
-                rotate="auto"
-                begin="0s"
+          {activeTab === 'mint' && (
+            <div className="bg-gray-800 p-6 rounded-3xl shadow-xl border border-[var(--accent-green)]">
+              <h3 className="text-3xl font-bold text-[var(--off-white)] mb-6">Acuñar Nuevo NFT HighPower</h3>
+              <p className="text-gray-400 mb-6">
+                Acuña un NFT único de HighPower y conviértete en parte de la leyenda.
+                Solo el propietario del contrato ({nftOwner ? `${nftOwner.substring(0,6)}...${nftOwner.substring(nftOwner.length - 4)}` : 'Cargando...'}) puede acuñar en este demo.
+              </p>
+              <button
+                onClick={handleMintNFT}
+                disabled={isAnyTxPending || userAddress !== nftOwner} // Deshabilita si no eres el propietario
+                className={`w-full bg-[var(--accent-green)] hover:bg-[var(--secondary-blue)] text-[var(--dark-gray)] font-bold py-3 px-8 rounded-full text-xl
+                            transition duration-300 ease-in-out transform hover:scale-105 shadow-xl flex items-center justify-center
+                            ${isAnyTxPending || userAddress !== nftOwner ? 'opacity-70 cursor-not-allowed' : ''}`}
               >
-                <mpath href="#nftPath1" />
-              </animateMotion>
-            </path>
-            <circle r="8" fill="var(--off-white)">
-              <animateMotion
-                path="M170 200 H340"
-                dur="3s"
-                repeatCount="indefinite"
-                rotate="auto"
-                begin="0s"
-              />
-            </circle>
-
-            {/* Flujo: Marketplace -> Comprador/Holder */}
-            <path id="nftPath2" d="M460 200 H630" stroke="var(--accent-green)" strokeWidth="4" fill="none" opacity="0.7">
-              <animateMotion
-                path="M460 200 H630"
-                dur="3s"
-                repeatCount="indefinite"
-                rotate="auto"
-                begin="1s"
-              >
-                <mpath href="#nftPath2" />
-              </animateMotion>
-            </path>
-            <circle r="8" fill="var(--off-white)">
-              <animateMotion
-                path="M460 200 H630"
-                dur="3s"
-                repeatCount="indefinite"
-                rotate="auto"
-                begin="1s"
-              />
-            </circle>
-
-            {/* Flujo: Marketplace -> Tesorería/Quema (Tarifas) */}
-            <path id="nftPath3" d="M400 250 V320" stroke="var(--accent-yellow)" strokeWidth="4" fill="none" opacity="0.7">
-              <animateMotion
-                path="M400 250 V320"
-                dur="2.5s"
-                repeatCount="indefinite"
-                rotate="auto"
-                begin="0.5s"
-              >
-                <mpath href="#nftPath3" />
-              </animateMotion>
-            </path>
-            <circle r="8" fill="var(--off-white)">
-              <animateMotion
-                path="M400 250 V320"
-                dur="2.5s"
-                repeatCount="indefinite"
-                rotate="auto"
-                begin="0.5s"
-              />
-            </circle>
-
-            {/* Flujo: Comprador/Holder -> Marketplace (Reventa) */}
-            <path id="nftPath4" d="M690 150 C750 100, 750 0, 400 0 C50 0, 50 100, 110 150 L340 150" stroke="var(--light-gray-text)" strokeWidth="2" fill="none" opacity="0.5" strokeDasharray="5,5">
-              <animateMotion
-                path="M690 150 C750 100, 750 0, 400 0 C50 0, 50 100, 110 150 L340 150"
-                dur="8s"
-                repeatCount="indefinite"
-                rotate="auto"
-                begin="2s"
-              >
-                <mpath href="#nftPath4" />
-              </animateMotion>
-            </path>
-            <circle r="6" fill="var(--accent-yellow)">
-              <animateMotion
-                path="M690 150 C750 100, 750 0, 400 0 C50 0, 50 100, 110 150 L340 150"
-                dur="8s"
-                repeatCount="indefinite"
-                rotate="auto"
-                begin="2s"
-              />
-            </circle>
-
-            {/* Leyenda */}
-            <g transform="translate(10, 10)">
-              <rect x="0" y="0" width="180" height="30" fill="rgba(0,0,0,0.5)" rx="5" ry="5" />
-              <rect x="5" y="8" width="10" height="10" fill="var(--primary-purple)" />
-              <text x="20" y="17" fill="white" fontSize="12">Minteo / Listado</text>
-            </g>
-            <g transform="translate(10, 50)">
-              <rect x="0" y="0" width="180" height="30" fill="rgba(0,0,0,0.5)" rx="5" ry="5" />
-              <rect x="5" y="8" width="10" height="10" fill="var(--accent-green)" />
-              <text x="20" y="17" fill="white" fontSize="12">Compra / Holding</text>
-            </g>
-            <g transform="translate(10, 90)">
-              <rect x="0" y="0" width="180" height="30" fill="rgba(0,0,0,0.5)" rx="5" ry="5" />
-              <rect x="5" y="8" width="10" height="10" fill="var(--accent-yellow)" />
-              <text x="20" y="17" fill="white" fontSize="12">Tarifas / Quemas</text>
-            </g>
-
-          </svg>
-        </div>
-        <p className="text-gray-500 text-sm mt-4">
-          *Esta infografía ilustra el ciclo de vida y el flujo de valor de los NFTs dentro del ecosistema HighPower.
-        </p>
-      </div>
+                {isMintingNFT ? <i className="fas fa-spinner fa-spin mr-3"></i> : <i className="fas fa-magic mr-3"></i>}
+                {isMintingNFT ? 'Acuñando...' : 'Acuñar NFT'}
+              </button>
+              {userAddress !== nftOwner && (
+                  <p className="text-red-400 text-sm mt-4">
+                      No eres el propietario del contrato NFT. Solo el propietario puede acuñar en esta versión de demostración.
+                  </p>
+              )}
+            </div>
+          )}
+        </>
+      )}
     </section>
   );
 }
