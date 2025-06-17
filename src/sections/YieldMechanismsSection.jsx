@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { formatUnits, parseUnits, maxUint256 } from 'viem'; // <-- ¡Asegúrate de que maxUint256 esté importado aquí!
-import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useBalance } from 'wagmi'; // Añadido useBalance
 
 // Importa las configuraciones de tus contratos desde el archivo centralizado
 import {
   HGP_TOKEN_CONFIG,
   STAKING_CONTRACT_CONFIG,
-  SIMULATED_APR_PERCENTAGE 
+  LP_FARMING_CONTRACT_CONFIG, // ¡IMPORTANTE! Nueva importación para LP Farming
+  LP_TOKEN_CONFIG,             // ¡IMPORTANTE! Nueva importación para el LP Token
+  SIMULATED_APR_PERCENTAGE,
+  // DAO_CONTRACT_CONFIG // Ya no necesitamos importarla aquí si no se usa directamente en este componente
 } from '../constants/contract-config.js'; // Ruta correcta relativa a src/sections/
 
 // -----------------------------------------------------------------------------
@@ -16,14 +19,14 @@ function YieldMechanismsSection({
   isConnected,
   userAddress,
   hgpBalance, // Esto ahora es un BigInt, se formateará aquí
-  refetchHGPBalance, 
+  refetchHGPBalance,
   setActiveSection,
   showCustomModal // Importa la función del modal para usarla
 }) {
-  const [activeTab, setActiveTab] = useState('staking'); 
+  const [activeTab, setActiveTab] = useState('staking');
   const [stakeAmount, setStakeAmount] = useState('');
   const [unstakeAmount, setUnstakeAmount] = useState('');
-  const [farmingLpAmount, setFarmingLpAmount] = useState(''); 
+  const [farmingLpAmount, setFarmingLpAmount] = useState('');
 
   // --- LECTURA DE DATOS REALES DE STAKING ---
   const { data: hgpAllowance, refetch: refetchHGPAllowance } = useReadContract({
@@ -32,7 +35,7 @@ function YieldMechanismsSection({
     args: [userAddress, STAKING_CONTRACT_CONFIG.address], // Aprobación del token para el contrato de Staking
     query: {
       enabled: isConnected && !!userAddress && !!STAKING_CONTRACT_CONFIG.address,
-      watch: true, 
+      watch: true,
     }
   });
 
@@ -65,11 +68,69 @@ function YieldMechanismsSection({
     }
   });
 
+  // --- LECTURA DE DATOS REALES DE LP FARMING ---
+  const { data: lpBalanceRaw, refetch: refetchLpBalance } = useBalance({ // Obtiene el balance de LP token del usuario
+    address: userAddress,
+    token: LP_TOKEN_CONFIG.address,
+    query: {
+        enabled: isConnected && !!userAddress && !!LP_TOKEN_CONFIG.address,
+        watch: true,
+    }
+  });
+  const lpBalance = lpBalanceRaw?.value || 0n; // Asegura que sea BigInt o 0n
+
+  const { data: lpAllowanceRaw, refetch: refetchLpAllowance } = useReadContract({
+    ...LP_TOKEN_CONFIG,
+    functionName: 'allowance',
+    args: [userAddress, LP_FARMING_CONTRACT_CONFIG.address], // Aprobación del LP token para el contrato de LP Farming
+    query: {
+      enabled: isConnected && !!userAddress && !!LP_TOKEN_CONFIG.address && !!LP_FARMING_CONTRACT_CONFIG.address,
+      watch: true,
+    }
+  });
+  const lpAllowance = lpAllowanceRaw || 0n; // Asegura que sea BigInt o 0n
+
+  const { data: userStakedLpAmount, refetch: refetchUserStakedLpAmount } = useReadContract({
+    ...LP_FARMING_CONTRACT_CONFIG,
+    functionName: 'lpStakedAmount',
+    args: [userAddress],
+    query: {
+      enabled: isConnected && !!userAddress && !!LP_FARMING_CONTRACT_CONFIG.address,
+      watch: true,
+    }
+  });
+
+  const { data: pendingLPRewards, refetch: refetchPendingLPRewards } = useReadContract({
+    ...LP_FARMING_CONTRACT_CONFIG,
+    functionName: 'lpEarned',
+    args: [userAddress],
+    query: {
+      enabled: isConnected && !!userAddress && !!LP_FARMING_CONTRACT_CONFIG.address,
+      watch: true,
+    }
+  });
+
+  const { data: lpRewardRate, refetch: refetchLPRewardRate } = useReadContract({
+    ...LP_FARMING_CONTRACT_CONFIG,
+    functionName: 'lpRewardRate',
+    query: {
+      enabled: isConnected && !!LP_FARMING_CONTRACT_CONFIG.address,
+      watch: true,
+    }
+  });
+
+
   // --- FUNCIONES DE ESCRITURA REALES (WAGMI) ---
   const { writeContract: writeApprove, isPending: approvePending, error: approveError } = useWriteContract();
   const { writeContract: writeStake, isPending: stakePending, error: stakeError } = useWriteContract();
   const { writeContract: writeUnstake, isPending: unstakePending, error: unstakeError } = useWriteContract();
   const { writeContract: writeClaimRewards, isPending: claimPending, error: claimError } = useWriteContract();
+
+  // Para LP Farming
+  const { writeContract: writeApproveLp, isPending: approveLpPending, error: approveLpError } = useWriteContract();
+  const { writeContract: writeStakeLp, isPending: stakeLpPending, error: stakeLpError } = useWriteContract();
+  const { writeContract: writeUnstakeLp, isPending: unstakeLpPending, error: unstakeLpError } = useWriteContract();
+  const { writeContract: writeClaimLpRewards, isPending: claimLpRewardsPending, error: claimLpRewardsError } = useWriteContract();
 
   // --- ESTADOS DE TRANSACCIONES (HASH Y CONFIRMACIÓN) ---
   const [approveTxHash, setApproveTxHash] = useState(null);
@@ -77,43 +138,55 @@ function YieldMechanismsSection({
   const [unstakeTxHash, setUnstakeTxHash] = useState(null);
   const [claimTxHash, setClaimTxHash] = useState(null);
 
-  const { isLoading: isApproving, isSuccess: isApprovedSuccess, isError: isApproveError } = useWaitForTransactionReceipt({
-    hash: approveTxHash,
-  });
-  const { isLoading: isStaking, isSuccess: isStakedSuccess, isError: isStakeError } = useWaitForTransactionReceipt({
-    hash: stakeTxHash,
-  });
-  const { isLoading: isUnstaking, isSuccess: isUnstakedSuccess, isError: isUnstakeError } = useWaitForTransactionReceipt({
-    hash: unstakeTxHash,
-  });
-  const { isLoading: isClaiming, isSuccess: isClaimedSuccess, isError: isClaimError } = useWaitForTransactionReceipt({
-    hash: claimTxHash,
-  });
+  const [approveLpTxHash, setApproveLpTxHash] = useState(null);
+  const [stakeLpTxHash, setStakeLpTxHash] = useState(null);
+  const [unstakeLpTxHash, setUnstakeLpTxHash] = useState(null);
+  const [claimLpRewardsTxHash, setClaimLpRewardsTxHash] = useState(null);
+
+
+  const { isLoading: isApproving, isSuccess: isApprovedSuccess, isError: isApproveError } = useWaitForTransactionReceipt({ hash: approveTxHash, });
+  const { isLoading: isStaking, isSuccess: isStakedSuccess, isError: isStakeError } = useWaitForTransactionReceipt({ hash: stakeTxHash, });
+  const { isLoading: isUnstaking, isSuccess: isUnstakedSuccess, isError: isUnstakeError } = useWaitForTransactionReceipt({ hash: unstakeTxHash, });
+  const { isLoading: isClaiming, isSuccess: isClaimedSuccess, isError: isClaimError } = useWaitForTransactionReceipt({ hash: claimTxHash, });
+
+  const { isLoading: isApprovingLp, isSuccess: isLpApprovedSuccess, isError: isApproveLpError } = useWaitForTransactionReceipt({ hash: approveLpTxHash, });
+  const { isLoading: isStakingLp, isSuccess: isLpStakedSuccess, isError: isStakeLpError } = useWaitForTransactionReceipt({ hash: stakeLpTxHash, });
+  const { isLoading: isUnstakingLp, isSuccess: isLpUnstakedSuccess, isError: isUnstakeLpError } = useWaitForTransactionReceipt({ hash: unstakeLpTxHash, });
+  const { isLoading: isClaimingLpRewards, isSuccess: isLpRewardsClaimedSuccess, isError: isClaimLpRewardsError } = useWaitForTransactionReceipt({ hash: claimLpRewardsTxHash, });
+
 
   // --- MANEJO DE EFECTOS POST-TRANSACCIÓN Y ERRORES CON CUSTOM MODAL ---
   useEffect(() => {
-    if (approveError) showCustomModal(`Error al aprobar: ${approveError.message}`);
-    if (stakeError) showCustomModal(`Error al stakear: ${stakeError.message}`);
-    if (unstakeError) showCustomModal(`Error al des-stakear: ${unstakeError.message}`);
-    if (claimError) showCustomModal(`Error al reclamar recompensas: ${claimError.message}`);
-  }, [approveError, stakeError, unstakeError, claimError, showCustomModal]);
+    if (approveError) showCustomModal(`Error al aprobar HGP: ${approveError.message}`);
+    if (stakeError) showCustomModal(`Error al stakear HGP: ${stakeError.message}`);
+    if (unstakeError) showCustomModal(`Error al des-stakear HGP: ${unstakeError.message}`);
+    if (claimError) showCustomModal(`Error al reclamar recompensas HGP: ${claimError.message}`);
 
+    if (approveLpError) showCustomModal(`Error al aprobar LP: ${approveLpError.message}`);
+    if (stakeLpError) showCustomModal(`Error al stakear LP: ${stakeLpError.message}`);
+    if (unstakeLpError) showCustomModal(`Error al des-stakear LP: ${unstakeLpError.message}`);
+    if (claimLpRewardsError) showCustomModal(`Error al reclamar recompensas LP: ${claimLpRewardsError.message}`);
+
+  }, [approveError, stakeError, unstakeError, claimError, approveLpError, stakeLpError, unstakeLpError, claimLpRewardsError, showCustomModal]);
+
+  // Efectos para recargar datos tras transacciones exitosas
   useEffect(() => {
     if (isApprovedSuccess) {
-      showCustomModal('Aprobación exitosa para el contrato de Staking!');
+      showCustomModal('Aprobación HGP exitosa!');
       refetchHGPAllowance();
       setApproveTxHash(null);
     }
     if (isStakedSuccess) {
-      showCustomModal('Staking exitoso!');
+      showCustomModal('Staking HGP exitoso!');
       setStakeAmount('');
       refetchHGPBalance();
       refetchUserStakedAmount();
       refetchTotalStaked();
+      refetchPendingRewards(); // Refetch por si se actualizó el earned
       setStakeTxHash(null);
     }
     if (isUnstakedSuccess) {
-      showCustomModal('Unstaking exitoso!');
+      showCustomModal('Unstaking HGP exitoso!');
       setUnstakeAmount('');
       refetchHGPBalance();
       refetchUserStakedAmount();
@@ -122,15 +195,49 @@ function YieldMechanismsSection({
       setUnstakeTxHash(null);
     }
     if (isClaimedSuccess) {
-      showCustomModal('Recompensas reclamadas exitosamente!');
+      showCustomModal('Recompensas HGP reclamadas exitosamente!');
       refetchHGPBalance();
       refetchPendingRewards();
       setClaimTxHash(null);
     }
-  }, [isApprovedSuccess, isStakedSuccess, isUnstakedSuccess, isClaimedSuccess, refetchHGPAllowance, refetchHGPBalance, refetchUserStakedAmount, refetchTotalStaked, refetchPendingRewards, showCustomModal]);
+
+    if (isLpApprovedSuccess) {
+      showCustomModal('Aprobación LP exitosa!');
+      refetchLpAllowance();
+      setApproveLpTxHash(null);
+    }
+    if (isLpStakedSuccess) {
+      showCustomModal('LP Farming exitoso!');
+      setFarmingLpAmount('');
+      refetchLpBalance();
+      refetchUserStakedLpAmount();
+      refetchPendingLPRewards();
+      setStakeLpTxHash(null);
+    }
+    if (isLpUnstakedSuccess) {
+      showCustomModal('LP Unfarming exitoso!');
+      setFarmingLpAmount(''); // Usamos el mismo input para unstake
+      refetchLpBalance();
+      refetchUserStakedLpAmount();
+      refetchPendingLPRewards();
+      setUnstakeLpTxHash(null);
+    }
+    if (isLpRewardsClaimedSuccess) {
+      showCustomModal('Recompensas LP reclamadas exitosamente!');
+      refetchHGPBalance(); // Se reclama HGP
+      refetchPendingLPRewards();
+      setClaimLpRewardsTxHash(null);
+    }
+  }, [
+    isApprovedSuccess, isStakedSuccess, isUnstakedSuccess, isClaimedSuccess,
+    isLpApprovedSuccess, isLpStakedSuccess, isLpUnstakedSuccess, isLpRewardsClaimedSuccess,
+    refetchHGPAllowance, refetchHGPBalance, refetchUserStakedAmount, refetchTotalStaked, refetchPendingRewards,
+    refetchLpAllowance, refetchLpBalance, refetchUserStakedLpAmount, refetchPendingLPRewards,
+    showCustomModal
+  ]);
 
 
-  // --- HANDLERS DE INTERACCIÓN REAL ---
+  // --- HANDLERS DE INTERACCIÓN REAL (STAKING HGP) ---
 
   const handleApprove = useCallback(async () => {
     if (!isConnected || !userAddress || !HGP_TOKEN_CONFIG.address || !STAKING_CONTRACT_CONFIG.address) {
@@ -138,27 +245,17 @@ function YieldMechanismsSection({
       return;
     }
     try {
-      // Aprobar la cantidad máxima posible (MAX_UINT256)
-      const amountToApprove = maxUint256; // <-- ¡Este es el cambio clave!
-
-      writeApprove({
+      const hash = await writeApprove({
         address: HGP_TOKEN_CONFIG.address,
         abi: HGP_TOKEN_CONFIG.abi,
         functionName: 'approve',
-        args: [STAKING_CONTRACT_CONFIG.address, amountToApprove],
-      }, {
-        onSuccess: (hash) => {
-          setApproveTxHash(hash);
-          showCustomModal(`Transacción de aprobación enviada! Hash: ${hash.substring(0, 10)}...`);
-        },
-        onError: (err) => {
-          console.error("Error al aprobar:", err);
-          showCustomModal(`Error al aprobar: ${err.message}`);
-        }
+        args: [STAKING_CONTRACT_CONFIG.address, maxUint256], // Aprobar la cantidad máxima
       });
+      setApproveTxHash(hash);
+      showCustomModal(`Transacción de aprobación HGP enviada! Hash: ${hash.substring(0, 10)}...`);
     } catch (error) {
-      console.error("Error inesperado al aprobar:", error);
-      showCustomModal(`Error inesperado al aprobar: ${error.message}`);
+      console.error("Error al aprobar HGP:", error);
+      showCustomModal(`Error al aprobar HGP: ${error.message}`);
     }
   }, [isConnected, userAddress, writeApprove, showCustomModal]);
 
@@ -172,29 +269,22 @@ function YieldMechanismsSection({
         return;
     }
     try {
-      const amount = parseUnits(stakeAmount, 18); 
-      if (amount > (hgpAllowance || 0n)) { 
+      const amount = parseUnits(stakeAmount, 18);
+      if (amount > (hgpAllowance || 0n)) {
         showCustomModal('Necesitas aprobar el contrato de Staking para esta cantidad o una mayor. Por favor, aprueba primero.');
         return;
       }
-      writeStake({
+      const hash = await writeStake({
         address: STAKING_CONTRACT_CONFIG.address,
         abi: STAKING_CONTRACT_CONFIG.abi,
         functionName: 'stake',
         args: [amount],
-      }, {
-        onSuccess: (hash) => {
-          setStakeTxHash(hash);
-          showCustomModal(`Transacción de staking enviada! Hash: ${hash.substring(0, 10)}...`);
-        },
-        onError: (err) => {
-          console.error("Error al stakear:", err);
-          showCustomModal(`Error al stakear: ${err.message}`);
-        }
       });
+      setStakeTxHash(hash);
+      showCustomModal(`Transacción de staking HGP enviada! Hash: ${hash.substring(0, 10)}...`);
     } catch (error) {
-      console.error("Error inesperado al stakear:", error);
-      showCustomModal(`Error inesperado al stakear: ${error.message}`);
+      console.error("Error al stakear HGP:", error);
+      showCustomModal(`Error al stakear HGP: ${error.message}`);
     }
   }, [isConnected, userAddress, stakeAmount, hgpAllowance, writeStake, showCustomModal]);
 
@@ -208,25 +298,18 @@ function YieldMechanismsSection({
         return;
     }
     try {
-      const amount = parseUnits(unstakeAmount, 18); 
-      writeUnstake({
+      const amount = parseUnits(unstakeAmount, 18);
+      const hash = await writeUnstake({
         address: STAKING_CONTRACT_CONFIG.address,
         abi: STAKING_CONTRACT_CONFIG.abi,
         functionName: 'unstake',
         args: [amount],
-      }, {
-        onSuccess: (hash) => {
-          setUnstakeTxHash(hash);
-          showCustomModal(`Transacción de unstaking enviada! Hash: ${hash.substring(0, 10)}...`);
-        },
-        onError: (err) => {
-          console.error("Error al des-stakear:", err);
-          showCustomModal(`Error al des-stakear: ${err.message}`);
-        }
       });
+      setUnstakeTxHash(hash);
+      showCustomModal(`Transacción de unstaking HGP enviada! Hash: ${hash.substring(0, 10)}...`);
     } catch (error) {
-      console.error("Error inesperado al des-stakear:", error);
-      showCustomModal(`Error inesperado al des-stakear: ${error.message}`);
+      console.error("Error al des-stakear HGP:", error);
+      showCustomModal(`Error al des-stakear HGP: ${error.message}`);
     }
   }, [isConnected, userAddress, unstakeAmount, writeUnstake, showCustomModal]);
 
@@ -240,93 +323,118 @@ function YieldMechanismsSection({
         return;
     }
     try {
-      writeClaimRewards({
+      const hash = await writeClaimRewards({
         address: STAKING_CONTRACT_CONFIG.address,
         abi: STAKING_CONTRACT_CONFIG.abi,
         functionName: 'claimRewards',
-      }, {
-        onSuccess: (hash) => {
-          setClaimTxHash(hash);
-          showCustomModal(`Transacción de reclamación de recompensas enviada! Hash: ${hash.substring(0, 10)}...`);
-        },
-        onError: (err) => {
-          console.error("Error al reclamar recompensas:", err);
-          showCustomModal(`Error al reclamar recompensas: ${err.message}`);
-        }
       });
+      setClaimTxHash(hash);
+      showCustomModal(`Transacción de reclamación de recompensas HGP enviada! Hash: ${hash.substring(0, 10)}...`);
     } catch (error) {
-      console.error("Error inesperado al reclamar recompensas:", error);
-      showCustomModal(`Error inesperado al reclamar recompensas: ${error.message}`);
+      console.error("Error al reclamar recompensas HGP:", error);
+      showCustomModal(`Error al reclamar recompensas HGP: ${error.message}`);
     }
   }, [isConnected, userAddress, writeClaimRewards, showCustomModal]);
 
 
-  // --- SIMULACIÓN PARA LIQUIDITY FARMING (LP) ---
-  // Esta sección se mantiene como SIMULACIÓN ya que no hay un contrato de LP Farming real asociado.
-  const [stakedLpTokens, setStakedLpTokens] = useState(0);
-  const [lpRewards, setLpRewards] = useState(0);
-  const lpFarmingAPR = 0.50; // 50% anual simulado
+  // --- HANDLERS DE INTERACCIÓN REAL (LP FARMING) ---
 
-  useEffect(() => {
-    const rewardInterval = setInterval(() => {
-      if (stakedLpTokens > 0) {
-        setLpRewards(prev => prev + (stakedLpTokens * lpFarmingAPR / (365 * 24))); 
-      }
-    }, 3600000); 
-    return () => clearInterval(rewardInterval);
-  }, [stakedLpTokens, lpFarmingAPR]);
+  const handleApproveLp = useCallback(async () => {
+    if (!isConnected || !userAddress || !LP_TOKEN_CONFIG.address || !LP_FARMING_CONTRACT_CONFIG.address) {
+      showCustomModal('Por favor, conecta tu billetera y asegúrate de que las direcciones de los contratos estén configuradas.');
+      return;
+    }
+    try {
+      const hash = await writeApproveLp({
+        address: LP_TOKEN_CONFIG.address,
+        abi: LP_TOKEN_CONFIG.abi, // Usar el ABI del LP Token para aprobar
+        functionName: 'approve',
+        args: [LP_FARMING_CONTRACT_CONFIG.address, maxUint256], // Aprobar la cantidad máxima al contrato de farming
+      });
+      setApproveLpTxHash(hash);
+      showCustomModal(`Transacción de aprobación LP enviada! Hash: ${hash.substring(0, 10)}...`);
+    } catch (error) {
+      console.error("Error al aprobar LP:", error);
+      showCustomModal(`Error al aprobar LP: ${error.message}`);
+    }
+  }, [isConnected, userAddress, writeApproveLp, showCustomModal]);
 
   const handleFarmLp = useCallback(async () => {
-    if (!isConnected || !userAddress) {
-      showCustomModal("Por favor, conecta tu billetera para hacer farming.");
+    if (!isConnected || !userAddress || !farmingLpAmount || parseFloat(farmingLpAmount) <= 0) {
+      showCustomModal('Por favor, conecta tu billetera e introduce una cantidad válida de LP para farmear.');
       return;
     }
-    const amount = parseFloat(farmingLpAmount);
-    if (isNaN(amount) || amount <= 0) {
-      showCustomModal("Por favor, introduce una cantidad válida.");
-      return;
+    if (!LP_FARMING_CONTRACT_CONFIG.address) {
+        showCustomModal('La dirección del contrato de LP Farming no está configurada.');
+        return;
     }
-    showCustomModal(`Aprobando y depositando ${amount} LP Tokens para farming (simulado)...`);
-    setTimeout(() => {
-      setStakedLpTokens(prev => prev + amount);
-      setLpRewards(0);
-      setFarmingLpAmount('');
-      showCustomModal("¡LP Tokens depositados en farming con éxito! (Simulado)");
-    }, 3000);
-  }, [isConnected, userAddress, farmingLpAmount, showCustomModal]);
+    try {
+      const amount = parseUnits(farmingLpAmount, 18); // LP tokens también con 18 decimales
+      if (amount > (lpAllowance || 0n)) {
+        showCustomModal('Necesitas aprobar el contrato de LP Farming para esta cantidad o una mayor. Por favor, aprueba primero.');
+        return;
+      }
+      const hash = await writeStakeLp({
+        address: LP_FARMING_CONTRACT_CONFIG.address,
+        abi: LP_FARMING_CONTRACT_CONFIG.abi,
+        functionName: 'stakeLP',
+        args: [amount],
+      });
+      setStakeLpTxHash(hash);
+      showCustomModal(`Transacción de LP Farming enviada! Hash: ${hash.substring(0, 10)}...`);
+    } catch (error) {
+      console.error("Error al farmear LP:", error);
+      showCustomModal(`Error al farmear LP: ${error.message}`);
+    }
+  }, [isConnected, userAddress, farmingLpAmount, lpAllowance, writeStakeLp, showCustomModal]);
 
   const handleUnfarmLp = useCallback(async () => {
-    if (!isConnected || !userAddress) {
-      showCustomModal("Por favor, conecta tu billetera.");
+    if (!isConnected || !userAddress || !farmingLpAmount || parseFloat(farmingLpAmount) <= 0) {
+      showCustomModal('Por favor, conecta tu billetera e introduce una cantidad válida de LP para retirar.');
       return;
     }
-    if (stakedLpTokens <= 0) {
-      showCustomModal("No tienes LP Tokens en farming para retirar.");
-      return;
+    if (!LP_FARMING_CONTRACT_CONFIG.address) {
+        showCustomModal('La dirección del contrato de LP Farming no está configurada.');
+        return;
     }
-    showCustomModal(`Retirando ${stakedLpTokens} LP Tokens de farming (simulado)...`);
-    setTimeout(() => {
-      setStakedLpTokens(0);
-      setLpRewards(0);
-      showCustomModal("¡LP Tokens retirados de farming con éxito! (Simulado)");
-    }, 3000);
-  }, [isConnected, userAddress, stakedLpTokens, showCustomModal]);
+    try {
+      const amount = parseUnits(farmingLpAmount, 18);
+      const hash = await writeUnstakeLp({
+        address: LP_FARMING_CONTRACT_CONFIG.address,
+        abi: LP_FARMING_CONTRACT_CONFIG.abi,
+        functionName: 'unstakeLP',
+        args: [amount],
+      });
+      setUnstakeLpTxHash(hash);
+      showCustomModal(`Transacción de retirada de LP Farming enviada! Hash: ${hash.substring(0, 10)}...`);
+    } catch (error) {
+      console.error("Error al retirar LP de farming:", error);
+      showCustomModal(`Error al retirar LP de farming: ${error.message}`);
+    }
+  }, [isConnected, userAddress, farmingLpAmount, writeUnstakeLp, showCustomModal]);
 
   const handleClaimLp = useCallback(async () => {
     if (!isConnected || !userAddress) {
-      showCustomModal("Por favor, conecta tu billetera.");
+      showCustomModal('Por favor, conecta tu billetera.');
       return;
     }
-    if (lpRewards <= 0) {
-      showCustomModal("No hay recompensas de LP para reclamar.");
-      return;
+    if (!LP_FARMING_CONTRACT_CONFIG.address) {
+        showCustomModal('La dirección del contrato de LP Farming no está configurada.');
+        return;
     }
-    showCustomModal(`Reclamando ${lpRewards.toFixed(4)} HGP de recompensas de farming (simulado)...`);
-    setTimeout(() => {
-      setLpRewards(0);
-      showCustomModal("¡Recompensas de LP reclamadas con éxito! (Simulado)");
-    }, 3000);
-  }, [isConnected, userAddress, lpRewards, showCustomModal]);
+    try {
+      const hash = await writeClaimLpRewards({
+        address: LP_FARMING_CONTRACT_CONFIG.address,
+        abi: LP_FARMING_CONTRACT_CONFIG.abi,
+        functionName: 'claimLPRewards',
+      });
+      setClaimLpRewardsTxHash(hash);
+      showCustomModal(`Transacción de reclamación de recompensas LP enviada! Hash: ${hash.substring(0, 10)}...`);
+    } catch (error) {
+      console.error("Error al reclamar recompensas LP:", error);
+      showCustomModal(`Error al reclamar recompensas LP: ${error.message}`);
+    }
+  }, [isConnected, userAddress, writeClaimLpRewards, showCustomModal]);
 
 
   // Función para formatear BigInts a números legibles (con 18 decimales)
@@ -335,7 +443,9 @@ function YieldMechanismsSection({
   };
 
   const isAnyTxPending = approvePending || stakePending || unstakePending || claimPending ||
-                         isApproving || isStaking || isUnstaking || isClaiming;
+                         isApproving || isStaking || isUnstaking || isClaiming ||
+                         approveLpPending || stakeLpPending || unstakeLpPending || claimLpRewardsPending ||
+                         isApprovingLp || isStakingLp || isUnstakingLp || isClaimingLpRewards;
 
   return (
     <section id="yield" className="p-8 bg-[var(--dark-gray)] rounded-3xl shadow-xl space-y-8 text-center border-2 border-[var(--primary-purple)]">
@@ -399,28 +509,28 @@ function YieldMechanismsSection({
                     placeholder="Cantidad de HGP"
                     className="w-full md:w-2/3 p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:ring-2 focus:ring-purple-500"
                   />
-                  <button
-                    onClick={handleStakeHGP}
-                    disabled={isAnyTxPending || !stakeAmount || parseFloat(stakeAmount) <= 0}
-                    className={`w-full md:w-1/3 bg-[var(--primary-purple)] hover:bg-[var(--secondary-blue)] text-white font-bold py-3 px-6 rounded-lg transition duration-300 transform hover:scale-105 shadow-md flex items-center justify-center
-                                ${isAnyTxPending || !stakeAmount || parseFloat(stakeAmount) <= 0 ? 'opacity-70 cursor-not-allowed' : ''}`}
-                  >
-                    {isAnyTxPending ? <i className="fas fa-spinner fa-spin mr-2"></i> : <i className="fas fa-arrow-up mr-2"></i>}
-                    {isStaking || stakePending ? 'Depositando...' : isApproving || approvePending ? 'Aprobando...' : 'Stakear HGP'}
-                  </button>
-                </div>
-                {/* Botón de Aprobar solo si la aprobación actual es menor que un umbral o si no hay aprobación */}
-                {formatTokenAmount(hgpAllowance) === '0.00' && ( // Solo muestra si no hay aprobación significativa
+                  {formatTokenAmount(hgpAllowance) === '0.00' || parseFloat(formatTokenAmount(hgpAllowance)) < parseFloat(stakeAmount || '0') ? (
                     <button
-                        onClick={handleApprove}
-                        disabled={isAnyTxPending}
-                        className={`mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 transform hover:scale-105 shadow-md flex items-center justify-center
-                                    ${isAnyTxPending ? 'opacity-70 cursor-not-allowed' : ''}`}
+                      onClick={handleApprove}
+                      disabled={isAnyTxPending || !stakeAmount || parseFloat(stakeAmount) <= 0}
+                      className={`w-full md:w-1/3 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 transform hover:scale-105 shadow-md flex items-center justify-center
+                                ${isAnyTxPending || !stakeAmount || parseFloat(stakeAmount) <= 0 ? 'opacity-70 cursor-not-allowed' : ''}`}
                     >
-                        {isAnyTxPending ? <i className="fas fa-spinner fa-spin mr-2"></i> : <i className="fas fa-check-circle mr-2"></i>}
-                        {isApproving || approvePending ? 'Aprobando...' : 'Aprobar HGP (Requerido una vez)'}
+                      {isApproving || approvePending ? <i className="fas fa-spinner fa-spin mr-2"></i> : <i className="fas fa-check-circle mr-2"></i>}
+                      {isApproving || approvePending ? 'Aprobando HGP...' : 'Aprobar HGP'}
                     </button>
-                )}
+                  ) : (
+                    <button
+                      onClick={handleStakeHGP}
+                      disabled={isAnyTxPending || !stakeAmount || parseFloat(stakeAmount) <= 0}
+                      className={`w-full md:w-1/3 bg-[var(--primary-purple)] hover:bg-[var(--secondary-blue)] text-white font-bold py-3 px-6 rounded-lg transition duration-300 transform hover:scale-105 shadow-md flex items-center justify-center
+                                ${isAnyTxPending || !stakeAmount || parseFloat(stakeAmount) <= 0 ? 'opacity-70 cursor-not-allowed' : ''}`}
+                    >
+                      {isStaking || stakePending ? <i className="fas fa-spinner fa-spin mr-2"></i> : <i className="fas fa-arrow-up mr-2"></i>}
+                      {isStaking || stakePending ? 'Depositando...' : 'Stakear HGP'}
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Sección de Retiro */}
@@ -461,29 +571,29 @@ function YieldMechanismsSection({
             </div>
           )}
 
-          {/* Sección de Liquidity Farming (SIMULADA) */}
+          {/* Sección de Liquidity Farming (AHORA REAL) */}
           {activeTab === 'farming' && (
             <div className="bg-gray-800 p-6 rounded-3xl shadow-xl border border-[var(--accent-yellow)]">
               <h3 className="text-3xl font-bold text-[var(--off-white)] mb-6">Liquidity Farming (LP Tokens)</h3>
-              <p className="text-red-400 text-lg mb-4 font-semibold">
+              {/* <p className="text-red-400 text-lg mb-4 font-semibold">
                 ¡Esta sección es actualmente una SIMULACIÓN! Para una funcionalidad real, se requiere un contrato de Farming de LP.
-              </p>
-              <p className="text-gray-400 mb-4">Aporta liquidez a los pools $HGP para ganar recompensas adicionales en HGP. APR estimado: {lpFarmingAPR * 100}%</p>
+              </p> */} {/* ¡Comentamos o eliminamos el mensaje de simulación! */}
+              <p className="text-gray-400 mb-4">Aporta tus LP Tokens para ganar recompensas HGP.</p>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center mb-6">
                 <div className="bg-gray-900 p-4 rounded-lg border border-gray-700">
-                  <p className="text-gray-400 text-sm">Tu Saldo LP Tokens Disponible (simulado):</p>
-                  <p className="text-xl font-bold text-[var(--off-white)]">10.50 LP</p>
+                  <p className="text-gray-400 text-sm">Tu Saldo LP Tokens Disponible:</p>
+                  <p className="text-xl font-bold text-[var(--off-white)]">{formatTokenAmount(lpBalance)} LP</p>
                 </div>
                 <div className="bg-gray-900 p-4 rounded-lg border border-gray-700">
                   <p className="text-gray-400 text-sm">Tus LP Tokens en Farming:</p>
-                  <p className="text-xl font-bold text-[var(--off-white)]">{stakedLpTokens.toFixed(2)} LP</p>
+                  <p className="text-xl font-bold text-[var(--off-white)]">{formatTokenAmount(userStakedLpAmount)} LP</p>
                 </div>
               </div>
 
-              {/* Sección de Farming */}
+              {/* Sección de Farmear LP */}
               <div className="bg-gray-900 p-6 rounded-lg border border-[var(--primary-purple)] mb-6">
-                <h4 className="text-2xl font-bold text-[var(--accent-green)] mb-4">Aportar LP Tokens</h4>
+                <h4 className="text-2xl font-bold text-[var(--accent-green)] mb-4">Aportar LP Tokens al Farming</h4>
                 <div className="flex flex-col md:flex-row gap-4 items-center mb-4">
                   <input
                     type="number"
@@ -492,39 +602,63 @@ function YieldMechanismsSection({
                     placeholder="Cantidad de LP Tokens"
                     className="w-full md:w-2/3 p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:ring-2 focus:ring-purple-500"
                   />
-                  <button
-                    onClick={handleFarmLp}
-                    disabled={isAnyTxPending || !farmingLpAmount || parseFloat(farmingLpAmount) <= 0}
-                    className={`w-full md:w-1/3 bg-[var(--primary-purple)] hover:bg-[var(--secondary-blue)] text-white font-bold py-3 px-6 rounded-lg transition duration-300 transform hover:scale-105 shadow-md flex items-center justify-center
-                                ${isAnyTxPending || !farmingLpAmount || parseFloat(farmingLpAmount) <= 0 ? 'opacity-70 cursor-not-allowed' : ''}`}
-                  >
-                    {isAnyTxPending ? <i className="fas fa-spinner fa-spin mr-2"></i> : <i className="fas fa-hand-holding-usd mr-2"></i>}
-                    Farmear LP (Simulado)
-                  </button>
+                  {formatTokenAmount(lpAllowance) === '0.00' || parseFloat(formatTokenAmount(lpAllowance)) < parseFloat(farmingLpAmount || '0') ? (
+                    <button
+                      onClick={handleApproveLp}
+                      disabled={isAnyTxPending || !farmingLpAmount || parseFloat(farmingLpAmount) <= 0}
+                      className={`w-full md:w-1/3 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 transform hover:scale-105 shadow-md flex items-center justify-center
+                                  ${isAnyTxPending || !farmingLpAmount || parseFloat(farmingLpAmount) <= 0 ? 'opacity-70 cursor-not-allowed' : ''}`}
+                    >
+                      {isApprovingLp || approveLpPending ? <i className="fas fa-spinner fa-spin mr-2"></i> : <i className="fas fa-check-circle mr-2"></i>}
+                      {isApprovingLp || approveLpPending ? 'Aprobando LP...' : 'Aprobar LP'}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleFarmLp}
+                      disabled={isAnyTxPending || !farmingLpAmount || parseFloat(farmingLpAmount) <= 0}
+                      className={`w-full md:w-1/3 bg-[var(--primary-purple)] hover:bg-[var(--secondary-blue)] text-white font-bold py-3 px-6 rounded-lg transition duration-300 transform hover:scale-105 shadow-md flex items-center justify-center
+                                  ${isAnyTxPending || !farmingLpAmount || parseFloat(farmingLpAmount) <= 0 ? 'opacity-70 cursor-not-allowed' : ''}`}
+                    >
+                      {isStakingLp || stakeLpPending ? <i className="fas fa-spinner fa-spin mr-2"></i> : <i className="fas fa-hand-holding-usd mr-2"></i>}
+                      {isStakingLp || stakeLpPending ? 'Farmear LP...' : 'Farmear LP'}
+                    </button>
+                  )}
                 </div>
+              </div>
+
+              {/* Sección de Retirar LP de Farming */}
+              <div className="bg-gray-900 p-6 rounded-lg border border-red-600 mb-6">
+                <h4 className="text-2xl font-bold text-[var(--accent-green)] mb-4">Retirar LP Tokens de Farming</h4>
+                <input
+                  type="number"
+                  value={farmingLpAmount} // Reutilizamos el input
+                  onChange={(e) => setFarmingLpAmount(e.target.value)}
+                  placeholder="Cantidad de LP Tokens a retirar"
+                  className="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:ring-2 focus:ring-red-500 mb-4"
+                />
                 <button
                   onClick={handleUnfarmLp}
-                  disabled={isAnyTxPending || stakedLpTokens <= 0}
-                  className={`mt-2 w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 transform hover:scale-105 shadow-md flex items-center justify-center
-                                ${isAnyTxPending || stakedLpTokens <= 0 ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  disabled={isAnyTxPending || !farmingLpAmount || parseFloat(farmingLpAmount) <= 0 || formatTokenAmount(userStakedLpAmount) === '0.00'}
+                  className={`w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 transform hover:scale-105 shadow-md flex items-center justify-center
+                                ${isAnyTxPending || !farmingLpAmount || parseFloat(farmingLpAmount) <= 0 || formatTokenAmount(userStakedLpAmount) === '0.00' ? 'opacity-70 cursor-not-allowed' : ''}`}
                 >
                   {isAnyTxPending ? <i className="fas fa-spinner fa-spin mr-2"></i> : <i className="fas fa-wallet mr-2"></i>}
-                  Retirar LP (Simulado)
+                  {isUnstakingLp || unstakeLpPending ? 'Retirando...' : 'Retirar LP de Farming'}
                 </button>
               </div>
 
-              {/* Sección de Recompensas de Farming */}
+              {/* Sección de Reclamar Recompensas de Farming */}
               <div className="bg-gray-900 p-6 rounded-lg border border-[var(--accent-green)]">
                 <h4 className="text-2xl font-bold text-[var(--accent-green)] mb-4">Tus Recompensas de Farming</h4>
-                <p className="text-[var(--off-white)] text-3xl font-bold mb-4">{lpRewards.toFixed(4)} HGP</p>
+                <p className="text-[var(--off-white)] text-3xl font-bold mb-4">{formatTokenAmount(pendingLPRewards)} HGP</p>
                 <button
                   onClick={handleClaimLp}
-                  disabled={isAnyTxPending || lpRewards <= 0}
+                  disabled={isAnyTxPending || formatTokenAmount(pendingLPRewards) === '0.00'}
                   className={`w-full bg-[var(--accent-green)] hover:bg-[var(--primary-purple)] text-[var(--dark-gray)] font-bold py-3 px-6 rounded-lg transition duration-300 transform hover:scale-105 shadow-md flex items-center justify-center
-                                ${isAnyTxPending || lpRewards <= 0 ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                ${isAnyTxPending || formatTokenAmount(pendingLPRewards) === '0.00' ? 'opacity-70 cursor-not-allowed' : ''}`}
                 >
                   {isAnyTxPending ? <i className="fas fa-spinner fa-spin mr-2"></i> : <i className="fas fa-gift mr-2"></i>}
-                  {isClaiming || claimPending ? 'Reclamando...' : 'Reclamar Recompensas'}
+                  {isClaimingLpRewards || claimLpRewardsPending ? 'Reclamando...' : 'Reclamar Recompensas LP'}
                 </button>
               </div>
             </div>
