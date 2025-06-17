@@ -53,8 +53,8 @@ const publicClient = createPublicClient({
 
 function AppContent() {
   const [currentSection, setCurrentSection] = useState('home');
-  // Ahora el estado guarda el ancho en unidades de Tailwind (ej. 16, 56)
-  const [sidebarCalculatedWidth, setSidebarCalculatedWidth] = useState(16); // Valor inicial para w-16
+  // Ahora el estado guarda el ancho REAL del sidebar en píxeles, recibido de Sidebar.jsx
+  const [sidebarWidthPx, setSidebarWidthPx] = useState(56); // Valor inicial para w-14 (56px)
   const [showVideoModal, setShowVideoModal] = useState(false);
 
   const { address, isConnected, chain } = useAccount();
@@ -223,9 +223,6 @@ function AppContent() {
     }
   };
 
-  // Convertir el valor de Tailwind width unit a px (1 unit = 4px)
-  const sidebarPaddingPx = sidebarCalculatedWidth * 4;
-
   return (
     <div className="min-h-screen bg-[var(--dark-gray)] text-[var(--light-gray-text)] flex flex-col font-sans">
       {showModal && <CustomModal message={message} onClose={closeModal} />}
@@ -273,15 +270,17 @@ function AppContent() {
 
           <div className="flex flex-1 pt-[72px]">
             {/* Sidebar Lateral */}
-            <Sidebar onNavigate={setCurrentSection} currentSection={currentSection} onExpandChange={setSidebarCalculatedWidth} />
+            <Sidebar onNavigate={setCurrentSection} currentSection={currentSection} onExpandChange={setSidebarWidthPx} />
 
             {/* Área de Contenido Principal
-                Aplicamos el padding-left dinámicamente usando el estado calculado del ancho del sidebar.
-                Esto es mejor que ml-X porque el padding no se superpone al contenido.
+                Aplicamos el padding-left dinámicamente usando el estado `sidebarWidthPx`.
+                Esto asegura que el contenido siempre empiece después del sidebar,
+                sin importar el ancho de la pantalla o si el sidebar está colapsado/expandido.
+                Sumamos un padding adicional (p-4 = 16px) a la izquierda para una mejor separación.
             */}
             <main
               className={`flex-grow p-4 md:p-6 lg:p-8 transition-all duration-300 ease-in-out`}
-              style={{ paddingLeft: `${sidebarPaddingPx + 16}px` }} // Sumamos un padding extra para separación
+              style={{ paddingLeft: `${sidebarWidthPx + 16}px` }} // Agrega un padding base de 16px
             >
               {renderCurrentSection()}
             </main>
@@ -290,7 +289,7 @@ function AppContent() {
           {/* Footer */}
           <footer
             className={`bg-gray-900 shadow-inner p-6 text-center text-gray-300 text-sm border-t border-purple-700 transition-all duration-300 ease-in-out`}
-            style={{ paddingLeft: `${sidebarPaddingPx + 16}px` }} // También aplicamos padding al footer
+            style={{ paddingLeft: `${sidebarWidthPx + 16}px` }} // El footer también necesita el padding
           >
             <p>© 2025 HighPower DApp. Todos los derechos reservados.</p>
           </footer>
