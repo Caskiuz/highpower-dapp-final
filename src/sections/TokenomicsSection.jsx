@@ -32,43 +32,45 @@ function TokenomicsSection() {
       {/* Sección de Distribución del Token */}
       <div className="bg-gray-800 p-6 rounded-3xl shadow-xl border border-[var(--primary-purple)]">
         <h3 className="text-3xl font-bold text-[var(--off-white)] mb-6 text-left">Distribución del Suministro Total ($HGP)</h3>
-        <ResponsiveContainer width="100%" height={400}>
-          <PieChart>
-            <Pie
-              data={data}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              outerRadius={150}
-              fill="#8884d8"
-              dataKey="value"
-              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-            >
-              {
-                data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))
-              }
-            </Pie>
-            <Tooltip
-              contentStyle={{ backgroundColor: 'var(--dark-gray)', border: '1px solid var(--secondary-blue)', borderRadius: '8px' }}
-              itemStyle={{ color: 'var(--light-gray-text)' }}
-              formatter={(value, name, props) => [`${value}%`, props.payload.name]}
-            />
-            <Legend
-              wrapperStyle={{ color: 'var(--light-gray-text)' }}
-              formatter={(value, entry) => <span style={{ color: entry.color }}>{entry.payload.name} ({entry.payload.value}%)</span>}
-            />
-          </PieChart>
-        </ResponsiveContainer>
+        <div className="w-full h-[300px] sm:h-[350px] md:h-[400px] flex flex-col items-center justify-center">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={data}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                outerRadius="80%"
+                fill="#8884d8"
+                dataKey="value"
+                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+              >
+                {
+                  data.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))
+                }
+              </Pie>
+              <Tooltip
+                contentStyle={{ backgroundColor: 'var(--dark-gray)', border: '1px solid var(--secondary-blue)', borderRadius: '8px' }}
+                itemStyle={{ color: 'var(--light-gray-text)' }}
+                formatter={(value, name, props) => [`${value}%`, props.payload.name]}
+              />
+              <Legend
+                wrapperStyle={{ color: 'var(--light-gray-text)' }}
+                formatter={(value, entry) => <span style={{ color: entry.color }}>{entry.payload.name} ({entry.payload.value}%)</span>}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
         <p className="text-gray-400 mt-4">Suministro Total: 21,000,000 HGP. Diseñado para la escasez y la sostenibilidad.</p>
       </div>
-
+      
       {/* Sección de Flujo de Valor y Mecanismos Deflacionarios */}
       <div className="bg-gray-800 p-6 rounded-3xl shadow-xl border border-[var(--secondary-blue)]">
         <h3 className="text-3xl font-bold text-[var(--off-white)] mb-6 text-left">Flujo de Valor y Deflación</h3>
         <p className="text-[var(--light-gray-text)] mb-4">El ecosistema HighPower está diseñado para crear un ciclo de valor autosostenible y deflacionario para el token $HGP:</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-left text-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-left text-sm">
           <div className="bg-gray-900 p-4 rounded-lg border border-gray-700">
             <i className="fas fa-arrow-right-arrow-left text-blue-400 text-2xl mb-2"></i>
             <h4 className="font-semibold text-[var(--off-white)]">Tarifas de Transacción</h4>
@@ -96,7 +98,7 @@ function TokenomicsSection() {
           </div>
         </div>
       </div>
-
+      
       {/* Simulador de Rendimiento de HGP (Ejemplo) */}
       <div className="bg-gray-800 p-6 rounded-3xl shadow-xl border border-[var(--accent-green)]">
         <h3 className="text-3xl font-bold text-[var(--off-white)] mb-6 text-left">Calculadora de Rendimiento Estimado</h3>

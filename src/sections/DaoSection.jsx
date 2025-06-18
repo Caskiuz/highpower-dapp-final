@@ -281,43 +281,33 @@ function DaoSection({
                          isCreatingProposal || isVoting || isExecutingProposal;
 
   return (
-    <section id="dao" className="p-8 bg-[var(--dark-gray)] rounded-3xl shadow-xl space-y-8 text-center border-2 border-[var(--primary-purple)]">
-      <h2 className="text-4xl font-bold text-[var(--primary-purple)] mb-6">Gobernanza Descentralizada (DAO)</h2>
-      <p className="text-[var(--light-gray-text)] text-lg mb-8">
+    <section id="dao" className="p-4 sm:p-8 bg-[var(--dark-gray)] rounded-3xl shadow-xl space-y-8 text-center border-2 border-[var(--primary-purple)]">
+      <h2 className="text-2xl sm:text-4xl font-bold text-[var(--primary-purple)] mb-4 sm:mb-6">Gobernanza Descentralizada (DAO)</h2>
+      <p className="text-[var(--light-gray-text)] text-base sm:text-lg mb-6 sm:mb-8">
         Tu voz importa. Participa en las decisiones clave del futuro de HighPower votando en las propuestas.
       </p>
 
       {/* Pestañas de navegación */}
-      <div className="flex justify-center mb-8 bg-gray-900 p-2 rounded-full shadow-inner border border-gray-700">
+      <div className="flex justify-center mb-6 sm:mb-8 bg-gray-900 p-2 rounded-full shadow-inner border border-gray-700">
         <button
-          className={`py-2 px-6 rounded-full font-semibold transition-all duration-300 
+          className={`py-2 px-4 sm:px-6 rounded-full font-semibold transition-all duration-300 
                       ${activeTab === 'proposals' ? 'bg-[var(--primary-purple)] text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
           onClick={() => setActiveTab('proposals')}
         >
           Propuestas
         </button>
         <button
-          className={`py-2 px-6 rounded-full font-semibold transition-all duration-300 
+          className={`py-2 px-4 sm:px-6 rounded-full font-semibold transition-all duration-300 
                       ${activeTab === 'create-proposal' ? 'bg-[var(--primary-purple)] text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
           onClick={() => setActiveTab('create-proposal')}
         >
           Crear Propuesta
         </button>
-        {/* 'Mis Votos' se puede implementar si el contrato DAO lo soporta con una función de consulta para votos por usuario */}
-        {/* {isConnected && (
-            <button
-              className={`py-2 px-6 rounded-full font-semibold transition-all duration-300 
-                          ${activeTab === 'my-votes' ? 'bg-[var(--primary-purple)] text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
-              onClick={() => setActiveTab('my-votes')}
-            >
-              Mis Votos
-            </button>
-        )} */}
       </div>
 
       {!isConnected && (
-        <div className="bg-gray-800 p-6 rounded-3xl shadow-xl border border-red-500 text-center">
-          <p className="text-red-400 text-xl font-semibold">
+        <div className="bg-gray-800 p-4 sm:p-6 rounded-3xl shadow-xl border border-red-500 text-center">
+          <p className="text-red-400 text-lg sm:text-xl font-semibold">
             ¡Conecta tu billetera para participar en la Gobernanza!
           </p>
         </div>
@@ -326,22 +316,22 @@ function DaoSection({
       {isConnected && (
         <>
           {activeTab === 'proposals' && (
-            <div className="bg-gray-800 p-6 rounded-3xl shadow-xl border border-[var(--secondary-blue)]">
-              <h3 className="text-3xl font-bold text-[var(--off-white)] mb-6">Propuestas de Gobernanza Activas y Pasadas</h3>
-              <p className="text-gray-400 mb-6">Vota en las decisiones que moldearán el futuro de HighPower.</p>
+            <div className="bg-gray-800 p-4 sm:p-6 rounded-3xl shadow-xl border border-[var(--secondary-blue)]">
+              <h3 className="text-2xl sm:text-3xl font-bold text-[var(--off-white)] mb-4 sm:mb-6">Propuestas de Gobernanza Activas y Pasadas</h3>
+              <p className="text-gray-400 mb-4 sm:mb-6">Vota en las decisiones que moldearán el futuro de HighPower.</p>
               {fetchingProposals ? (
-                <div className="flex justify-center items-center h-48">
-                  <i className="fas fa-spinner fa-spin text-[var(--accent-green)] text-4xl"></i>
-                  <p className="ml-4 text-[var(--off-white)]">Cargando propuestas...</p>
+                <div className="flex justify-center items-center h-32 sm:h-48">
+                  <i className="fas fa-spinner fa-spin text-[var(--accent-green)] text-2xl sm:text-4xl"></i>
+                  <p className="ml-2 sm:ml-4 text-[var(--off-white)]">Cargando propuestas...</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 gap-6">
+                <div className="grid grid-cols-1 gap-4 sm:gap-6">
                   {proposals.length > 0 ? (
                     proposals.map(proposal => (
-                      <div key={proposal.id} className="bg-gray-900 p-6 rounded-lg shadow-md border border-gray-700 text-left">
-                        <div className="flex justify-between items-center mb-2">
-                          <h4 className="text-2xl font-semibold text-[var(--accent-green)]">ID {proposal.id}: {proposal.title}</h4>
-                          <span className={`px-3 py-1 rounded-full text-sm font-bold 
+                      <div key={proposal.id} className="bg-gray-900 p-4 sm:p-6 rounded-lg shadow-md border border-gray-700 text-left">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2">
+                          <h4 className="text-xl sm:text-2xl font-semibold text-[var(--accent-green)]">ID {proposal.id}: {proposal.title}</h4>
+                          <span className={`mt-2 sm:mt-0 px-3 py-1 rounded-full text-xs sm:text-sm font-bold 
                             ${proposal.state === 'Active' ? 'bg-blue-600 text-white' : 
                               proposal.state === 'Succeeded' ? 'bg-green-600 text-white' : 
                               proposal.state === 'Executed' ? 'bg-purple-600 text-white' : 
@@ -349,17 +339,17 @@ function DaoSection({
                             {proposal.state}
                           </span>
                         </div>
-                        <p className="text-gray-400 text-sm mb-4">{proposal.description}</p>
-                        <div className="flex justify-between items-center text-gray-500 text-sm mb-4">
+                        <p className="text-gray-400 text-xs sm:text-sm mb-2 sm:mb-4">{proposal.description}</p>
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center text-gray-500 text-xs sm:text-sm mb-2 sm:mb-4">
                           <span>Finaliza: {new Date(proposal.voteEndTime * 1000).toLocaleString()}</span>
                           <span className="text-[var(--accent-yellow)] font-semibold">Proponente: {proposal.proposer.substring(0,6)}...{proposal.proposer.substring(proposal.proposer.length - 4)}</span>
                         </div>
-                        <div className="mb-4">
-                            <p className="text-[var(--off-white)] font-bold">Votos a favor: <span className="text-green-400">{proposal.votesFor} HGP</span></p>
-                            <p className="text-[var(--off-white)] font-bold">Votos en contra: <span className="text-red-400">{proposal.votesAgainst} HGP</span></p>
+                        <div className="mb-2 sm:mb-4">
+                          <p className="text-[var(--off-white)] font-bold">Votos a favor: <span className="text-green-400">{proposal.votesFor} HGP</span></p>
+                          <p className="text-[var(--off-white)] font-bold">Votos en contra: <span className="text-red-400">{proposal.votesAgainst} HGP</span></p>
                         </div>
                         {proposal.state === 'Active' && (
-                          <div className="flex space-x-4">
+                          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
                             <button
                               onClick={() => handleVote(proposal.id, true)} // true para 'for'
                               disabled={isAnyTxPending}
@@ -379,14 +369,14 @@ function DaoSection({
                           </div>
                         )}
                         {proposal.state === 'Succeeded' && !proposal.executed && (
-                          <div className="mt-4">
+                          <div className="mt-2 sm:mt-4">
                             <button
-                                onClick={() => handleExecuteProposal(proposal.id)}
-                                disabled={isAnyTxPending}
-                                className={`w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 transform hover:scale-105 shadow-md flex items-center justify-center
-                                ${isAnyTxPending ? 'opacity-70 cursor-not-allowed' : ''}`}
+                              onClick={() => handleExecuteProposal(proposal.id)}
+                              disabled={isAnyTxPending}
+                              className={`w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 transform hover:scale-105 shadow-md flex items-center justify-center
+                                         ${isAnyTxPending ? 'opacity-70 cursor-not-allowed' : ''}`}
                             >
-                                <i className="fas fa-hammer mr-2"></i> {isExecutingProposal ? 'Ejecutando...' : 'Ejecutar Propuesta'}
+                              <i className="fas fa-hammer mr-2"></i> {isExecutingProposal ? 'Ejecutando...' : 'Ejecutar Propuesta'}
                             </button>
                           </div>
                         )}
@@ -401,34 +391,34 @@ function DaoSection({
           )}
 
           {activeTab === 'create-proposal' && (
-            <div className="bg-gray-800 p-6 rounded-3xl shadow-xl border border-[var(--accent-green)]">
-              <h3 className="text-3xl font-bold text-[var(--off-white)] mb-6">Crear Nueva Propuesta de Gobernanza</h3>
-              <p className="text-gray-400 mb-6">
+            <div className="bg-gray-800 p-4 sm:p-6 rounded-3xl shadow-xl border border-[var(--accent-green)]">
+              <h3 className="text-2xl sm:text-3xl font-bold text-[var(--off-white)] mb-4 sm:mb-6">Crear Nueva Propuesta de Gobernanza</h3>
+              <p className="text-gray-400 mb-4 sm:mb-6">
                 Envía tu propuesta para el ecosistema HighPower. Necesitas un mínimo de <span className="font-semibold text-white">{UI_PROPOSAL_THRESHOLD_HGP} HGP</span> para someterla a votación.
               </p>
-              <div className="flex flex-col space-y-4">
+              <div className="flex flex-col space-y-2 sm:space-y-4">
                 <input
                   type="text"
                   placeholder="Título de la propuesta"
                   value={proposalTitle}
                   onChange={(e) => setProposalTitle(e.target.value)}
-                  className="p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:ring-2 focus:ring-purple-500"
+                  className="p-2 sm:p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:ring-2 focus:ring-purple-500"
                 />
                 <textarea
                   placeholder="Descripción detallada de la propuesta..."
                   value={proposalDescription}
                   onChange={(e) => setProposalDescription(e.target.value)}
-                  rows="6"
-                  className="p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:ring-2 focus:ring-purple-500 resize-y"
+                  rows="4"
+                  className="p-2 sm:p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:ring-2 focus:ring-purple-500 resize-y"
                 ></textarea>
                 <button
                   onClick={handleCreateProposal}
                   disabled={isAnyTxPending || !proposalTitle || !proposalDescription || parseFloat(formatUnits(hgpBalance || 0n, 18)) < UI_PROPOSAL_THRESHOLD_HGP}
-                  className={`bg-[var(--accent-green)] hover:bg-[var(--secondary-blue)] text-[var(--dark-gray)] font-bold py-3 px-8 rounded-full text-xl
+                  className={`bg-[var(--accent-green)] hover:bg-[var(--secondary-blue)] text-[var(--dark-gray)] font-bold py-2 sm:py-3 px-6 sm:px-8 rounded-full text-lg sm:text-xl
                               transition duration-300 ease-in-out transform hover:scale-105 shadow-xl flex items-center justify-center
                               ${isAnyTxPending || !proposalTitle || !proposalDescription || parseFloat(formatUnits(hgpBalance || 0n, 18)) < UI_PROPOSAL_THRESHOLD_HGP ? 'opacity-70 cursor-not-allowed' : ''}`}
                 >
-                  {isCreatingProposal ? <i className="fas fa-spinner fa-spin mr-3"></i> : <i className="fas fa-lightbulb mr-3"></i>}
+                  {isCreatingProposal ? <i className="fas fa-spinner fa-spin mr-2 sm:mr-3"></i> : <i className="fas fa-lightbulb mr-2 sm:mr-3"></i>}
                   {isCreatingProposal ? 'Enviando...' : 'Crear Propuesta'}
                 </button>
               </div>

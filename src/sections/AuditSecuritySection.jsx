@@ -27,7 +27,7 @@ function AuditSecuritySection() {
               href={firm.link} 
               target="_blank" 
               rel="noopener noreferrer" 
-              className="flex flex-col items-center justify-center p-4 bg-gray-900 rounded-lg transform transition-transform duration-300 hover:scale-105 hover:shadow-lg hover:border-[var(--secondary-blue)] border border-gray-700"
+              className="flex flex-col items-center justify-center p-4 bg-gray-900 rounded-lg transform transition-transform duration-300 hover:scale-105 hover:shadow-lg hover:border-[var(--secondary-blue)]"
             >
               <img src={firm.logo} alt={firm.name} className="w-24 h-auto mb-2 filter grayscale hover:grayscale-0 transition-filter duration-300" />
               <p className="text-[var(--light-gray-text)] font-semibold text-sm">{firm.name}</p>
@@ -44,19 +44,19 @@ function AuditSecuritySection() {
         <h3 className="text-3xl font-bold text-[var(--off-white)] mb-6">Nuestro Compromiso de Seguridad</h3>
         <ul className="text-left text-gray-400 list-disc list-inside space-y-3">
           <li>
-            <strong className="text-[var(--accent-green)]">Auditorías Externas Constantes:</strong> Todos los contratos inteligentes críticos serán auditados por firmas de seguridad de blockchain de renombre antes de su despliegue y en cada actualización importante.
+            <strong className="text-[var(--accent-green)]">Auditorías Externas Constantes:</strong> Todos los contratos inteligentes críticos serán auditados por firmas de seguridad de blockchain reconocidas antes de su despliegue.
           </li>
           <li>
-            <strong className="text-[var(--accent-green)]">Pruebas Rigurosas:</strong> Implementación de pruebas unitarias y de integración exhaustivas en todo el código base para asegurar la robustez y minimizar vulnerabilidades.
+            <strong className="text-[var(--accent-green)]">Pruebas Rigurosas:</strong> Implementación de pruebas unitarias y de integración exhaustivas en todo el código base para asegurar la robustez y evitar vulnerabilidades.
           </li>
           <li>
-            <strong className="text-[var(--accent-green)]">Programa de Bug Bounty:</strong> Una vez maduro, consideraremos la implementación de un programa de recompensas por errores para incentivar a la comunidad a identificar y reportar posibles vulnerabilidades.
+            <strong className="text-[var(--accent-green)]">Programa de Bug Bounty:</strong> Una vez maduro, consideraremos la implementación de un programa de recompensas por errores para incentivar a la comunidad a reportar vulnerabilidades.
           </li>
           <li>
             <strong className="text-[var(--accent-green)]">Mejores Prácticas de Desarrollo:</strong> Adherencia estricta a los estándares de seguridad de Solidity y las mejores prácticas de desarrollo Web3.
           </li>
           <li>
-            <strong className="text-[var(--accent-green)]">Gestión de Fondos Multi-sig:</strong> Los fondos de la tesorería serán gestionados con billeteras de firmas múltiples para mayor seguridad.
+            <strong className="text-[var(--accent-green)]">Gestión de Fondos Multi-sig:</strong> Los fondos de la tesorería serán gestionados con billeteras de firmas múltiples para mayor seguridad y transparencia.
           </li>
         </ul>
       </div>

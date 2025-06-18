@@ -101,7 +101,7 @@ function RoadmapSection() {
         {roadmapMilestones.map((milestone, index) => (
           <div 
             key={milestone.id} 
-            className="relative w-full py-6 flex items-start md:items-center justify-center"
+            className="relative w-full py-6 flex flex-col md:flex-row md:items-center justify-center"
           >
             {/* Contenedor del hito */}
             <div 
@@ -141,7 +141,7 @@ function RoadmapSection() {
             {/* Círculo en la línea de tiempo */}
             <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
                             w-8 h-8 rounded-full border-4 ${milestone.status === 'completed' ? 'border-green-500 bg-green-700' : 
-                                                            milestone.status === 'in-progress' ? 'border-yellow-500 bg-yellow-700' : 'border-blue-500 bg-blue-700'} 
+                                                        milestone.status === 'in-progress' ? 'border-yellow-500 bg-yellow-700' : 'border-blue-500 bg-blue-700'} 
                             z-20 flex items-center justify-center`}>
               <i className={`fas ${getStatusIcon(milestone.status)} text-white text-base`}></i>
             </div>

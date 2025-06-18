@@ -49,7 +49,6 @@ const publicClient = createPublicClient({
   transport: http(bscTestnet.rpcUrls.default.http[0]),
 });
 
-
 function AppContent() {
   const [currentSection, setCurrentSection] = useState('home');
   const [sidebarWidthPx, setSidebarWidthPx] = useState(56);
@@ -211,6 +210,9 @@ function AppContent() {
     }
   };
 
+  // Responsive layout: sidebar visible on md+, hamburger + bottom nav in mobile
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-[var(--dark-gray)] text-[var(--light-gray-text)] flex flex-col font-sans">
       {showModal && <CustomModal message={message} onClose={closeModal} />}
@@ -244,35 +246,73 @@ function AppContent() {
         <HomePage onLaunchDapp={handleLaunchDapp} onShowVideo={() => setShowVideoModal(true)} />
       ) : (
         <>
-          <Navbar
-            isConnected={isConnected}
-            address={address}
-            balanceData={balanceData}
-            hgpBalance={formattedHgpBalance}
-            nftCount={formattedNftCount}
-            connect={connect}
-            connectors={connectors}
-            pendingConnector={pendingConnector}
-            disconnect={disconnect}
-            HGP_TOKEN_CONFIG={HGP_TOKEN_CONFIG}
-          />
+          {/* Mobile hamburger navbar */}
+          <nav className="flex items-center justify-between px-4 py-3 bg-gray-800 md:hidden">
+            <button onClick={() => setSidebarOpen(true)}>
+              <i className="fas fa-bars text-xl text-white"></i>
+            </button>
+            <span className="ml-2 text-lg font-bold text-green-400">HighPower</span>
+            {/* Puedes agregar aquí botones rápidos si deseas */}
+          </nav>
 
-          <div className="flex flex-1 pt-[72px]">
+          {/* Sidebar drawer mobile */}
+          <aside className={`fixed z-50 top-0 left-0 w-56 h-full bg-gray-900 flex-col md:hidden transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+            <Sidebar onNavigate={section => { setCurrentSection(section); setSidebarOpen(false); }} currentSection={currentSection} onExpandChange={setSidebarWidthPx} />
+            <button onClick={() => setSidebarOpen(false)} className="absolute top-4 right-4 text-white text-2xl">&times;</button>
+          </aside>
+
+          {/* Sidebar permanent desktop */}
+          <aside className="hidden md:flex w-56 bg-gray-900 flex-col">
             <Sidebar onNavigate={setCurrentSection} currentSection={currentSection} onExpandChange={setSidebarWidthPx} />
-            <main
-              className={`flex-grow p-4 md:p-6 lg:p-8 transition-all duration-300 ease-in-out`}
-              style={{ paddingLeft: `${sidebarWidthPx + 16}px` }}
-            >
-              {renderCurrentSection()}
-            </main>
-          </div>
+          </aside>
 
-          <footer
-            className={`bg-gray-900 shadow-inner p-6 text-center text-gray-300 text-sm border-t border-purple-700 transition-all duration-300 ease-in-out`}
-            style={{ paddingLeft: `${sidebarWidthPx + 16}px` }}
-          >
-            <p>© 2025 HighPower DApp. Todos los derechos reservados.</p>
-          </footer>
+          {/* Main layout */}
+          <div className="flex flex-1 flex-col md:flex-row pt-[0px]">
+            <div className="flex-1 flex flex-col">
+              <Navbar
+                isConnected={isConnected}
+                address={address}
+                balanceData={balanceData}
+                hgpBalance={formattedHgpBalance}
+                nftCount={formattedNftCount}
+                connect={connect}
+                connectors={connectors}
+                pendingConnector={pendingConnector}
+                disconnect={disconnect}
+                HGP_TOKEN_CONFIG={HGP_TOKEN_CONFIG}
+              />
+
+              <main className="flex-1 p-4 md:p-6 lg:p-8 transition-all duration-300 ease-in-out">
+                {renderCurrentSection()}
+              </main>
+
+              {/* Bottom nav solo móvil */}
+              <nav className="fixed bottom-0 left-0 right-0 bg-gray-900 flex md:hidden justify-around py-2 border-t border-purple-800 z-40">
+                <button className="text-white flex flex-col items-center text-sm" onClick={() => setCurrentSection('news-announcements')}>
+                  <i className="fas fa-bolt"></i>
+                  <span>Noticias</span>
+                </button>
+                <button className="text-white flex flex-col items-center text-sm" onClick={() => setCurrentSection('dashboard')}>
+                  <i className="fas fa-tachometer-alt"></i>
+                  <span>Dashboard</span>
+                </button>
+                <button className="text-white flex flex-col items-center text-sm" onClick={() => setCurrentSection('nfts')}>
+                  <i className="fas fa-image"></i>
+                  <span>NFTs</span>
+                </button>
+                <button className="text-white flex flex-col items-center text-sm" onClick={() => setCurrentSection('dao')}>
+                  <i className="fas fa-users"></i>
+                  <span>DAO</span>
+                </button>
+              </nav>
+              {/* Footer */}
+              <footer
+                className={`bg-gray-900 shadow-inner p-6 text-center text-gray-300 text-sm border-t border-purple-700 transition-all duration-300 ease-in-out`}
+              >
+                <p>© 2025 HighPower DApp. Todos los derechos reservados.</p>
+              </footer>
+            </div>
+          </div>
         </>
       )}
     </div>

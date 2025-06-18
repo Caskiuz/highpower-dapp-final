@@ -1,71 +1,65 @@
 // src/sections/PartnersEcosystemSection.jsx
-import React from 'react';
+import React from "react";
 
 function PartnersEcosystemSection() {
   const partners = [
-    { 
-      name: 'PancakeSwap', 
-      logo: 'https://placehold.co/150x80/280B5C/FFFFFF?text=PancakeSwap', // Simula logo oscuro
-      description: 'Nuestro principal socio DEX para el trading de $HGP y provisión de liquidez.',
-      link: '#' 
+    {
+      name: "BNB Chain",
+      desc: "Blockchain principal para el despliegue de $HGP y el core de nuestro ecosistema.",
+      logo: "https://cryptologos.cc/logos/bnb-bnb-logo.png?v=025", // Reemplaza por un logo propio si lo tienes
+      url: "https://www.bnbchain.org/"
     },
-    { 
-      name: 'MetaMask', 
-      logo: 'https://placehold.co/150x80/2C2C2C/F6851B?text=MetaMask', // Simula logo oscuro
-      description: 'Una de las billeteras Web3 más populares, esencial para la interacción del usuario.',
-      link: '#' 
+    {
+      name: "PancakeSwap",
+      desc: "DEX clave donde $HGP obtiene liquidez, swaps y yield-farming.",
+      logo: "https://cryptologos.cc/logos/pancakeswap-cake-logo.png?v=025",
+      url: "https://pancakeswap.finance/"
     },
-    { 
-      name: 'BNB Smart Chain', 
-      logo: 'https://placehold.co/150x80/000000/F0B90B?text=BNB+Chain', // Simula logo oscuro
-      description: 'La blockchain subyacente que potencia el ecosistema HighPower.',
-      link: '#' 
+    {
+      name: "CertiK (Auditoría)",
+      desc: "Auditoría de contratos inteligentes para máxima seguridad.",
+      logo: "https://cryptologos.cc/logos/certik-ctk-logo.png?v=025",
+      url: "https://www.certik.com/"
     },
-    { 
-      name: 'CoinGecko', 
-      logo: 'https://placehold.co/150x80/000000/2CD297?text=CoinGecko', // Simula logo oscuro
-      description: 'Plataforma líder para seguimiento de precios y datos de criptomonedas.',
-      link: '#' 
-    },
-    { 
-      name: 'BscScan', 
-      logo: 'https://placehold.co/150x80/000000/3A6CF4?text=BscScan', // Simula logo oscuro
-      description: 'Explorador de bloques para monitorear todas las transacciones en la BNB Chain.',
-      link: '#' 
-    },
-    { 
-      name: 'WalletConnect', 
-      logo: 'https://placehold.co/150x80/000000/4096EE?text=WalletConnect', // Simula logo oscuro
-      description: 'Permite la conexión segura de diversas billeteras móviles y de escritorio.',
-      link: '#' 
-    },
+    {
+      name: "Chainlink",
+      desc: "Oráculos para precios y feeds descentralizados en la DApp.",
+      logo: "https://cryptologos.cc/logos/chainlink-link-logo.png?v=025",
+      url: "https://chain.link/"
+    }
   ];
 
   return (
-    <section id="partners-ecosystem" className="p-8 bg-[var(--dark-gray)] rounded-3xl shadow-xl space-y-8 text-center border-2 border-[var(--secondary-blue)]">
-      <h2 className="text-4xl font-bold text-[var(--secondary-blue)] mb-6">Nuestros Socios y Ecosistema</h2>
+    <section id="partners-ecosystem" className="p-8 bg-[var(--dark-gray)] rounded-3xl shadow-xl space-y-10 text-center border-2 border-[var(--accent-yellow)]">
+      <h2 className="text-4xl font-bold text-[var(--accent-yellow)] mb-6">
+        Partners & Ecosistema
+      </h2>
       <p className="text-[var(--light-gray-text)] text-lg mb-8">
-        Construyendo un futuro descentralizado con aliados estratégicos que comparten nuestra visión.
+        Colaboramos con líderes globales para potenciar el crecimiento, la seguridad y la innovación en HighPower.
       </p>
-
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-        {partners.map((partner, index) => (
-          <a 
-            key={index} 
-            href={partner.link} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="flex flex-col items-center justify-center p-4 bg-gray-800 rounded-lg shadow-md border border-gray-700 transform transition-transform duration-300 hover:scale-105 hover:shadow-lg hover:border-[var(--accent-green)]"
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 items-stretch">
+        {partners.map((partner, idx) => (
+          <a
+            key={partner.name}
+            href={partner.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group bg-gray-800 rounded-xl shadow-lg border border-gray-700 flex flex-col items-center p-6 transition-transform duration-200 hover:scale-105 hover:border-[var(--accent-yellow)]"
           >
-            <img src={partner.logo} alt={partner.name} className="w-28 h-auto object-contain mb-3 filter grayscale hover:grayscale-0 transition-filter duration-300" />
-            <h3 className="text-xl font-bold text-[var(--off-white)] mb-2">{partner.name}</h3>
-            <p className="text-gray-400 text-sm">{partner.description}</p>
+            <img
+              src={partner.logo}
+              alt={`Logo ${partner.name}`}
+              className="h-16 w-16 object-contain mb-4 rounded-full bg-white p-2"
+            />
+            <h3 className="text-xl font-semibold text-[var(--off-white)] group-hover:text-[var(--accent-yellow)] mb-2">
+              {partner.name}
+            </h3>
+            <p className="text-gray-400 text-sm">{partner.desc}</p>
           </a>
         ))}
       </div>
-
       <p className="text-gray-500 text-sm mt-8">
-        *Estos socios son simulados. La lista se actualizará con nuestras colaboraciones reales a medida que el proyecto avance.
+        ¿Quieres formar parte del ecosistema? <a href="mailto:partners@highpower.finance" className="text-[var(--accent-yellow)] underline hover:text-yellow-300">Contáctanos</a>
       </p>
     </section>
   );

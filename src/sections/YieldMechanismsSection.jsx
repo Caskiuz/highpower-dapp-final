@@ -43,12 +43,6 @@ function YieldMechanismsSection({ isConnected, userAddress, showCustomModal }) {
     return '0.00'; // Valor predeterminado para no conectado o sin datos
   }, []);
 
-  // DEBUG LOG: Verificar que la dirección del LP Token se carga correctamente
-  useEffect(() => {
-    console.log("LP_TOKEN_CONFIG.address en YieldMechanismsSection:", LP_TOKEN_CONFIG.address);
-  }, []);
-
-
   // --- Staking de HGP ---
   const [hgpStakeAmount, setHgpStakeAmount] = useState('');
   const [hgpUnstakeAmount, setHgpUnstakeAmount] = useState('');
@@ -60,7 +54,6 @@ function YieldMechanismsSection({ isConnected, userAddress, showCustomModal }) {
     query: { enabled: isConnected && !!userAddress, watch: true }
   });
   const userHgpBalance = formatBigIntToDisplay(userHgpBalanceRaw, HGP_DECIMALS);
-  console.log("HGP Balance Raw:", userHgpBalanceRaw, "Formatted:", userHgpBalance);
 
   // CORRECTO: 'stakedAmount' para balance stakeado de HGP
   const { data: hgpStakedAmountRaw, refetch: refetchHgpStakedAmount } = useReadContract({
@@ -70,7 +63,6 @@ function YieldMechanismsSection({ isConnected, userAddress, showCustomModal }) {
     query: { enabled: isConnected && !!userAddress, watch: true }
   });
   const hgpStakedAmount = formatBigIntToDisplay(hgpStakedAmountRaw, HGP_DECIMALS);
-  console.log("HGP Staked Raw:", hgpStakedAmountRaw, "Formatted:", hgpStakedAmount);
 
   // CORRECTO: 'earned' para recompensas reclamables de HGP
   const { data: hgpClaimableRewardsRaw, refetch: refetchHgpClaimableRewards } = useReadContract({
@@ -80,7 +72,6 @@ function YieldMechanismsSection({ isConnected, userAddress, showCustomModal }) {
     query: { enabled: isConnected && !!userAddress, watch: true }
   });
   const hgpClaimableRewards = formatBigIntToDisplay(hgpClaimableRewardsRaw, HGP_DECIMALS);
-  console.log("HGP Claimable Rewards Raw:", hgpClaimableRewardsRaw, "Formatted:", hgpClaimableRewards);
 
   // Wagmi Hooks para escribir en el contrato de Staking HGP
   const { writeContract: writeApproveHgp, data: approveHgpTxHash } = useWriteContract();
@@ -92,7 +83,6 @@ function YieldMechanismsSection({ isConnected, userAddress, showCustomModal }) {
   const { isLoading: isStakingHgp, isSuccess: isStakedHgpSuccess } = useWaitForTransactionReceipt({ hash: stakeHgpTxHash });
   const { isLoading: isUnstakingHgp, isSuccess: isUnstakedHgpSuccess } = useWaitForTransactionReceipt({ hash: unstakeHgpTxHash });
   const { isLoading: isClaimingHgp, isSuccess: isClaimedHgpSuccess } = useWaitForTransactionReceipt({ hash: claimHgpTxHash });
-
 
   // --- LP Farming ---
   const [lpStakeAmount, setLpStakeAmount] = useState('');
@@ -106,8 +96,6 @@ function YieldMechanismsSection({ isConnected, userAddress, showCustomModal }) {
     query: { enabled: isConnected && !!userAddress, watch: true }
   });
   const userLpBalance = formatBigIntToDisplay(userLpBalanceRaw, LP_TOKEN_DECIMALS);
-  console.log("LP Balance Raw:", userLpBalanceRaw, "Formatted:", userLpBalance);
-
 
   // Cantidad de LP Tokens stakeados por el usuario en el contrato de farming
   const { data: lpStakedAmountRaw, refetch: refetchLpStakedAmount } = useReadContract({
@@ -117,8 +105,6 @@ function YieldMechanismsSection({ isConnected, userAddress, showCustomModal }) {
     query: { enabled: isConnected && !!userAddress, watch: true }
   });
   const lpStakedAmount = formatBigIntToDisplay(lpStakedAmountRaw, LP_TOKEN_DECIMALS);
-  console.log("LP Staked Raw:", lpStakedAmountRaw, "Formatted:", lpStakedAmount);
-
 
   // Recompensas de HGP reclamables del LP Farming
   const { data: lpClaimableRewardsRaw, refetch: refetchLpClaimableRewards } = useReadContract({
@@ -128,8 +114,6 @@ function YieldMechanismsSection({ isConnected, userAddress, showCustomModal }) {
     query: { enabled: isConnected && !!userAddress, watch: true }
   });
   const lpClaimableRewards = formatBigIntToDisplay(lpClaimableRewardsRaw, HGP_DECIMALS); // Las recompensas son en HGP
-  console.log("LP Claimable Rewards Raw:", lpClaimableRewardsRaw, "Formatted:", lpClaimableRewards);
-
 
   // Wagmi Hooks para escribir en el contrato de LP Farming
   const { writeContract: writeApproveLp, data: approveLpTxHash } = useWriteContract();
@@ -141,7 +125,6 @@ function YieldMechanismsSection({ isConnected, userAddress, showCustomModal }) {
   const { isLoading: isStakingLp, isSuccess: isStakedLpSuccess } = useWaitForTransactionReceipt({ hash: stakeLpTxHash });
   const { isLoading: isUnstakingLp, isSuccess: isUnstakedLpSuccess } = useWaitForTransactionReceipt({ hash: unstakeLpTxHash });
   const { isLoading: isClaimingLp, isSuccess: isClaimedLpSuccess } = useWaitForTransactionReceipt({ hash: claimLpTxHash });
-
 
   // --- Efecto para refetchear balances y estados tras transacciones o cambios de conexión ---
   useEffect(() => {
@@ -162,7 +145,6 @@ function YieldMechanismsSection({ isConnected, userAddress, showCustomModal }) {
     refetchUserLpBalance, refetchLpStakedAmount, refetchLpClaimableRewards
   ]);
 
-
   // --- Handlers de Staking HGP ---
   const handleApproveHgp = useCallback(async () => {
     if (!userAddress || !hgpStakeAmount || parseFloat(hgpStakeAmount) <= 0) {
@@ -178,10 +160,8 @@ function YieldMechanismsSection({ isConnected, userAddress, showCustomModal }) {
         functionName: 'approve',
         args: [STAKING_CONTRACT_CONFIG.address, amountToApprove],
       });
-      console.log("Approve HGP Tx:", tx);
       showCustomModal(`Transacción de aprobación enviada. Hash: ${tx.hash.substring(0, 10)}...`);
     } catch (error) {
-      console.error("Error al aprobar HGP:", error);
       showCustomModal(`Error al aprobar HGP: ${error.message}`);
     }
   }, [userAddress, hgpStakeAmount, writeApproveHgp, showCustomModal]);
@@ -200,10 +180,8 @@ function YieldMechanismsSection({ isConnected, userAddress, showCustomModal }) {
         functionName: 'stake',
         args: [amountToStake],
       });
-      console.log("Stake HGP Tx:", tx);
       showCustomModal(`Transacción de staking enviada. Hash: ${tx.hash.substring(0, 10)}...`);
     } catch (error) {
-      console.error("Error al stake HGP:", error);
       showCustomModal(`Error al stake HGP: ${error.message}`);
     }
   }, [userAddress, hgpStakeAmount, writeStakeHgp, showCustomModal]);
@@ -222,10 +200,8 @@ function YieldMechanismsSection({ isConnected, userAddress, showCustomModal }) {
         functionName: 'unstake',
         args: [amountToUnstake],
       });
-      console.log("Unstake HGP Tx:", tx);
       showCustomModal(`Transacción de unstaking enviada. Hash: ${tx.hash.substring(0, 10)}...`);
     } catch (error) {
-      console.error("Error al unstake HGP:", error);
       showCustomModal(`Error al unstake HGP: ${error.message}`);
     }
   }, [userAddress, hgpUnstakeAmount, writeUnstakeHgp, showCustomModal]);
@@ -243,14 +219,11 @@ function YieldMechanismsSection({ isConnected, userAddress, showCustomModal }) {
         functionName: 'claimRewards',
         args: [],
       });
-      console.log("Claim HGP Rewards Tx:", tx);
       showCustomModal(`Transacción de reclamación enviada. Hash: ${tx.hash.substring(0, 10)}...`);
     } catch (error) {
-      console.error("Error al reclamar recompensas HGP:", error);
       showCustomModal(`Error al reclamar recompensas HGP: ${error.message}`);
     }
   }, [userAddress, writeClaimHgpRewards, showCustomModal]);
-
 
   // --- Handlers de LP Farming ---
   const handleApproveLp = useCallback(async () => {
@@ -267,10 +240,8 @@ function YieldMechanismsSection({ isConnected, userAddress, showCustomModal }) {
         functionName: 'approve',
         args: [LP_FARMING_CONTRACT_CONFIG.address, amountToApprove],
       });
-      console.log("Approve LP Tx:", tx);
       showCustomModal(`Transacción de aprobación de LP enviada. Hash: ${tx.hash.substring(0, 10)}...`);
     } catch (error) {
-      console.error("Error al aprobar LP:", error);
       showCustomModal(`Error al aprobar LP: ${error.message}`);
     }
   }, [userAddress, lpStakeAmount, writeApproveLp, showCustomModal]);
@@ -289,10 +260,8 @@ function YieldMechanismsSection({ isConnected, userAddress, showCustomModal }) {
         functionName: 'stakeLP',
         args: [amountToStake],
       });
-      console.log("Stake LP Tx:", tx);
       showCustomModal(`Transacción de staking de LP enviada. Hash: ${tx.hash.substring(0, 10)}...`);
     } catch (error) {
-      console.error("Error al stake LP:", error);
       showCustomModal(`Error al stake LP: ${error.message}`);
     }
   }, [userAddress, lpStakeAmount, writeStakeLp, showCustomModal]);
@@ -311,10 +280,8 @@ function YieldMechanismsSection({ isConnected, userAddress, showCustomModal }) {
         functionName: 'unstakeLP',
         args: [amountToUnstake],
       });
-      console.log("Unstake LP Tx:", tx);
       showCustomModal(`Transacción de unstaking de LP enviada. Hash: ${tx.hash.substring(0, 10)}...`);
     } catch (error) {
-      console.error("Error al unstake LP:", error);
       showCustomModal(`Error al unstake LP: ${error.message}`);
     }
   }, [userAddress, lpUnstakeAmount, writeUnstakeLp, showCustomModal]);
@@ -332,14 +299,11 @@ function YieldMechanismsSection({ isConnected, userAddress, showCustomModal }) {
         functionName: 'claimRewards',
         args: [],
       });
-      console.log("Claim LP Rewards Tx:", tx);
       showCustomModal(`Transacción de reclamación de LP enviada. Hash: ${tx.hash.substring(0, 10)}...`);
     } catch (error) {
-      console.error("Error al reclamar recompensas LP:", error);
       showCustomModal(`Error al reclamar recompensas LP: ${error.message}`);
     }
   }, [userAddress, writeClaimLpRewards, showCustomModal]);
-
 
   if (!isConnected) {
     return (

@@ -28,7 +28,7 @@ function WhitepaperSection() {
       <h2 className="text-4xl font-bold text-[var(--accent-green)] mb-6 text-center">Whitepaper de HighPower DApp</h2>
       
       {loadingError ? (
-        <p className="text-red-500 text-center">Error al cargar el Whitepaper. Por favor, asegúrate de que el archivo 'public/whitepaper/HighPowerWhitepaper.html' existe y la ruta es correcta. Inténtalo de nuevo más tarde.</p>
+        <p className="text-red-500 text-center">Error al cargar el Whitepaper. Por favor, asegúrate de que el archivo 'public/whitepaper/HighPowerWhitepaper.html' existe y la ruta es correcta. Intenta recargar la página.</p>
       ) : whitepaperHtmlContent ? (
         <div 
           className="max-w-none leading-relaxed" 

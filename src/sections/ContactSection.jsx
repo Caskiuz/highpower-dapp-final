@@ -87,7 +87,7 @@ function ContactSection() {
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className={`shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-900 text-[var(--off-white)] ${formErrors.name ? 'border-red-500' : 'border-gray-700'}`}
+              className={`shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-900 text-[var(--off-white)] ${formErrors.name ? 'border-red-400' : ''}`}
               placeholder="Tu nombre"
               disabled={submissionStatus === 'submitting'}
             />
@@ -105,7 +105,7 @@ function ContactSection() {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className={`shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-900 text-[var(--off-white)] ${formErrors.email ? 'border-red-500' : 'border-gray-700'}`}
+              className={`shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-900 text-[var(--off-white)] ${formErrors.email ? 'border-red-400' : ''}`}
               placeholder="tu@ejemplo.com"
               disabled={submissionStatus === 'submitting'}
             />
@@ -123,7 +123,7 @@ function ContactSection() {
               name="subject"
               value={formData.subject}
               onChange={handleChange}
-              className={`shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-900 text-[var(--off-white)] ${formErrors.subject ? 'border-red-500' : 'border-gray-700'}`}
+              className={`shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-900 text-[var(--off-white)] ${formErrors.subject ? 'border-red-400' : ''}`}
               placeholder="Asunto de tu mensaje"
               disabled={submissionStatus === 'submitting'}
             />
@@ -141,7 +141,7 @@ function ContactSection() {
               value={formData.message}
               onChange={handleChange}
               rows="5"
-              className={`shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-900 text-[var(--off-white)] resize-y ${formErrors.message ? 'border-red-500' : 'border-gray-700'}`}
+              className={`shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-900 text-[var(--off-white)] resize-y ${formErrors.message ? 'border-red-400' : ''}`}
               placeholder="Escribe tu mensaje aquí..."
               disabled={submissionStatus === 'submitting'}
             ></textarea>
@@ -195,7 +195,7 @@ function ContactSection() {
             <i className="fab fa-discord text-blue-400 text-3xl"></i>
             <div>
               <p className="text-gray-400">Comunidad Discord:</p>
-              <a href="https://discord.gg/YOUR_DISCORD_INVITE" target="_blank" rel="noopener noreferrer" className="text-[var(--off-white)] hover:text-[var(--accent-green)] font-semibold transition-colors">Únete a nuestro Discord</a>
+              <a href="https://discord.gg/YOUR_DISCORD_INVITE" target="_blank" rel="noopener noreferrer" className="text-[var(--off-white)] hover:text-[var(--accent-green)] font-semibold transition-colors">Unirse a Discord</a>
             </div>
           </div>
           <div className="flex items-center space-x-4 bg-gray-900 p-4 rounded-lg border border-gray-700">
@@ -209,7 +209,7 @@ function ContactSection() {
             <i className="fab fa-telegram-plane text-blue-500 text-3xl"></i>
             <div>
               <p className="text-gray-400">Telegram:</p>
-              <a href="https://t.me/HighPowerDAppOfficial" target="_blank" rel="noopener noreferrer" className="text-[var(--off-white)] hover:text-[var(--accent-green)] font-semibold transition-colors">Únete al Grupo Oficial</a>
+              <a href="https://t.me/HighPowerDAppOfficial" target="_blank" rel="noopener noreferrer" className="text-[var(--off-white)] hover:text-[var(--accent-green)] font-semibold transition-colors">@HighPowerDAppOfficial</a>
             </div>
           </div>
         </div>
