@@ -1,4 +1,3 @@
-// tailwind.config.js
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -7,17 +6,16 @@ export default {
   ],
   theme: {
     extend: {
-      // Define tus variables de color CSS aquí para que Tailwind las use
       colors: {
-        'dark-gray': 'var(--dark-gray)',
-        'light-gray-text': 'var(--light-gray-text)',
-        'primary-purple': 'var(--primary-purple)',
-        'secondary-blue': 'var(--secondary-blue)',
-        'accent-green': 'var(--accent-green)',
-        'accent-yellow': 'var(--accent-yellow)',
-        'off-white': 'var(--off-white)',
+        darkGray: 'var(--dark-gray)',
+        lightGrayText: 'var(--light-gray-text)',
+        primaryPurple: 'var(--primary-purple)', // Usa camelCase (opcional, pero más claro)
+        secondaryBlue: 'var(--secondary-blue)',
+        accentGreen: 'var(--accent-green)',
+        accentYellow: 'var(--accent-yellow)',
+        offWhite: 'var(--off-white)',
       },
     },
   },
-  plugins: [], // ¡ESTO DEBE ESTAR VACÍO!
+  plugins: [],
 }

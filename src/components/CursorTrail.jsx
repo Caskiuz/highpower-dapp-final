@@ -1,78 +1,103 @@
-// src/components/CursorTrail.jsx
 import React, { useEffect, useRef, useCallback } from 'react';
 
-// Este componente crea un rastro visual que sigue el cursor del ratón.
-// Utiliza un elemento div y lo mueve y escala con transformaciones CSS.
+// CursorTrail blockchain style: glow, morph, color igual a bg-primary-purple
 function CursorTrail() {
-  // Crea una referencia a nuestro elemento del rastro del cursor en el DOM.
   const cursorRef = useRef(null);
-  // Almacena la última posición del ratón para cálculos de velocidad y dirección.
   const lastMousePosition = useRef({ x: 0, y: 0 });
-  // Almacena la opacidad actual del rastro, para que se desvanezca.
   const opacity = useRef(0);
-  // Un temporizador para actualizar la opacidad, creando un efecto de desvanecimiento suave.
   const fadeTimeout = useRef(null);
 
-  // Usa useCallback para memorizar la función de movimiento del ratón.
-  // Esto previene re-creaciones innecesarias de la función y optimiza el rendimiento.
-  const handleMouseMove = useCallback((e) => {
-    // Si el elemento del cursor no está listo, salimos.
-    if (!cursorRef.current) return;
+  // El color debe coincidir con --primary-purple (usado en botones/etiquetas)
+  // y tener un glow/halo elegante blockchain.
+  const TRAIL_SIZE = 34; // px, tamaño del rastro
+  const GLOW_SIZE = 70; // px, tamaño del halo blockchain
 
-    // Calcula la velocidad del movimiento del ratón.
+  const handleMouseMove = useCallback((e) => {
+    if (!cursorRef.current) return;
     const deltaX = e.clientX - lastMousePosition.current.x;
     const deltaY = e.clientY - lastMousePosition.current.y;
-    // La magnitud del movimiento (distancia).
     const speed = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 
-    // Mueve el rastro del cursor a la posición actual del ratón.
-    // Usamos transform para un rendimiento de animación más suave.
-    cursorRef.current.style.transform = `translate(${e.clientX}px, ${e.clientY}px) scale(${1 + speed * 0.005})`; // Escalado ligero basado en velocidad
+    cursorRef.current.style.transform = `translate(${e.clientX}px, ${e.clientY}px) scale(${1 + speed * 0.013})`;
 
-    // Hace que el rastro sea visible.
     opacity.current = 1;
     cursorRef.current.style.opacity = opacity.current;
 
-    // Si ya hay un temporizador de desvanecimiento, lo limpiamos para reiniciar.
-    if (fadeTimeout.current) {
-      clearTimeout(fadeTimeout.current);
-    }
-    // Inicia un nuevo temporizador para desvanecer el rastro después de un corto retraso.
+    if (fadeTimeout.current) clearTimeout(fadeTimeout.current);
     fadeTimeout.current = setTimeout(() => {
-      // Reduce la opacidad gradualmente.
       opacity.current = 0;
       cursorRef.current.style.opacity = opacity.current;
-    }, 150); // El rastro comienza a desvanecerse después de 150ms
+    }, 120);
 
-    // Actualiza la última posición del ratón.
     lastMousePosition.current = { x: e.clientX, y: e.clientY };
-  }, []); // Dependencias vacías, la función no cambia a menos que se re-monte.
+  }, []);
 
-  // Configura los event listeners cuando el componente se monta.
   useEffect(() => {
-    // Añade el event listener para el movimiento del ratón a todo el documento.
     document.addEventListener('mousemove', handleMouseMove);
-
-    // Función de limpieza que se ejecuta cuando el componente se desmonta.
-    // Esto es crucial para prevenir fugas de memoria.
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
-      if (fadeTimeout.current) {
-        clearTimeout(fadeTimeout.current);
-      }
+      if (fadeTimeout.current) clearTimeout(fadeTimeout.current);
     };
-  }, [handleMouseMove]); // Solo se ejecuta si handleMouseMove cambia (lo cual no ocurre con useCallback y [] deps).
+  }, [handleMouseMove]);
 
   return (
-    // Este es el elemento visual del rastro del cursor.
-    // Se posiciona absolutamente y se le da un estilo inicial.
     <div
       ref={cursorRef}
-      className="fixed z-[9999] pointer-events-none w-8 h-8 rounded-full bg-purple-500 opacity-0 transition-opacity duration-150 ease-out -translate-x-1/2 -translate-y-1/2 shadow-lg"
+      className="fixed z-[9999] pointer-events-none"
       style={{
-        transition: 'opacity 0.15s ease-out, transform 0.05s linear', // Transición rápida para el movimiento
+        width: TRAIL_SIZE,
+        height: TRAIL_SIZE,
+        left: 0,
+        top: 0,
+        borderRadius: '50%',
+        opacity: 0,
+        background: 'var(--primary-purple)',
+        boxShadow: `
+          0 0 0 0px var(--primary-purple),
+          0 0 18px 5px var(--primary-purple),
+          0 0 ${GLOW_SIZE}px 10px #9f6bff77,
+          0 0 24px 10px #4f1d8966
+        `,
+        border: '2.5px solid #fff3',
+        mixBlendMode: 'plus-lighter',
+        transition: 'opacity 0.18s cubic-bezier(.6,.6,0,1), transform 0.07s cubic-bezier(.5,0,.5,1)',
+        filter: 'blur(0.5px) saturate(1.3)',
+        backdropFilter: 'blur(0.5px)',
+        pointerEvents: 'none',
+        userSelect: 'none',
+        // Centro visual (por defecto -translate-x-1/2 -translate-y-1/2)
+        transform: 'translate(0px, 0px) scale(1)'
       }}
-    ></div>
+    >
+      {/* SVG decorativo sutil: red hexagonal (blockchain) */}
+      <svg
+        width={TRAIL_SIZE}
+        height={TRAIL_SIZE}
+        viewBox="0 0 34 34"
+        fill="none"
+        style={{
+          position: 'absolute',
+          left: 0, top: 0,
+          filter: 'blur(0.3px)',
+          pointerEvents: 'none',
+        }}
+      >
+        <g opacity="0.28">
+          <polygon
+            points="17,3 30,11 30,27 17,34 4,27 4,11"
+            stroke="#fff"
+            strokeWidth="1"
+            fill="none"
+          />
+          <polygon
+            points="17,8 25,13 25,23 17,28 9,23 9,13"
+            stroke="#fff"
+            strokeWidth="0.5"
+            fill="none"
+          />
+        </g>
+      </svg>
+    </div>
   );
 }
 
