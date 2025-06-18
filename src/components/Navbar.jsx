@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from "react";
-import { formatUnits } from "viem"; // Si usas ethers, puedes cambiar a: import { formatUnits } from "ethers";
+import { formatUnits } from "viem";
 
-// MODAL WALLET ESTILO PANCAKESWAP
 const WALLET_LIST = [
   {
     section: "Recientemente usada",
@@ -75,7 +74,6 @@ function WalletModal({ open, onClose, onSelectWallet }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
       <div className="bg-[#181635] rounded-3xl shadow-2xl flex flex-col md:flex-row p-2 md:p-0 max-w-3xl w-full animate-fade-in">
-        {/* Selección de wallet */}
         <div className="w-full md:w-[420px] p-6 flex flex-col">
           <button
             onClick={onClose}
@@ -114,7 +112,6 @@ function WalletModal({ open, onClose, onSelectWallet }) {
             Cancelar
           </button>
         </div>
-        {/* Lado derecho (ilustración, opcional) */}
         <div className="hidden md:flex flex-col items-center justify-center w-[320px] bg-[#201d3d] rounded-3xl m-3">
           <img
             src="https://raw.githubusercontent.com/pancakeswap/pancake-frontend/master/public/images/wallets.svg"
@@ -126,7 +123,6 @@ function WalletModal({ open, onClose, onSelectWallet }) {
           <span className="text-sm text-white/80 px-3 pb-12 text-center">Aprende cómo conectar tu wallet a HighPower y comienza a explorar el ecosistema blockchain.</span>
         </div>
       </div>
-      {/* Animaciones */}
       <style>{`
         .animate-fade-in { animation: fadeIn 0.5s cubic-bezier(.22,1,.36,1) 1 both; }
         @keyframes fadeIn {
@@ -138,7 +134,6 @@ function WalletModal({ open, onClose, onSelectWallet }) {
   );
 }
 
-// ------------------ NAVBAR PRINCIPAL ------------------
 export default function Navbar({
   isConnected,
   address,
@@ -149,12 +144,11 @@ export default function Navbar({
   connectors,
   pendingConnector,
   disconnect,
-  HGP_TOKEN_CONFIG // pásalo como prop o importa, según tu proyecto
+  HGP_TOKEN_CONFIG
 }) {
   const [walletModalOpen, setWalletModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Formatea balance amigable y seguro para BigInt
   const formatValue = (value, decimals = 18) => {
     if (typeof value === "bigint") {
       const num = parseFloat(formatUnits(value, decimals));
@@ -167,7 +161,6 @@ export default function Navbar({
     return value;
   };
 
-  // Copia contrato
   const copyContractAddress = useCallback(() => {
     if (HGP_TOKEN_CONFIG?.address) {
       try {
@@ -180,7 +173,6 @@ export default function Navbar({
     }
   }, [HGP_TOKEN_CONFIG]);
 
-  // Mapea walletId a el conector real
   const connectorMap = {
     metamask: ["MetaMask", "injected", "metamask"],
     walletconnect: ["WalletConnect", "walletconnect"],
@@ -210,7 +202,6 @@ export default function Navbar({
   return (
     <>
       <nav className="fixed top-0 left-0 w-full bg-darkGray/95 backdrop-blur-lg px-2 sm:px-4 flex flex-row items-center justify-between z-40 shadow-lg border-b border-primary-purple h-auto min-h-[56px] sm:min-h-[68px] transition-all">
-        {/* Logo y título */}
         <div className="flex items-center gap-2 sm:gap-3">
           <span className="relative flex items-center">
             <svg width="36" height="36" viewBox="0 0 40 40" fill="none" className="h-8 w-8 sm:h-10 sm:w-10 object-contain animate-spin-slow">
@@ -242,7 +233,6 @@ export default function Navbar({
             </div>
           )}
         </div>
-        {/* Info de wallet conectada o botón */}
         <div className="flex items-center gap-2 sm:gap-4 flex-wrap justify-end">
           {isConnected && address ? (
             <div className="flex items-center bg-gray-800/90 rounded-full px-2 py-1 sm:px-4 sm:py-2 shadow-inner border border-primary-purple text-xs sm:text-sm flex-wrap">
@@ -280,7 +270,6 @@ export default function Navbar({
             </button>
           )}
         </div>
-        {/* Contrato HGP: visible en mobile */}
         {HGP_TOKEN_CONFIG?.address && (
           <div className="flex md:hidden items-center mt-2 absolute left-1/2 -translate-x-1/2 bottom-[-30px] bg-gray-700 rounded-full px-2 py-0.5 shadow-inner border border-gray-600 text-xs z-40">
             <span className="text-gray-400 mr-1">Contrato:</span>
@@ -296,7 +285,6 @@ export default function Navbar({
             </button>
           </div>
         )}
-        {/* Animación personalizada */}
         <style>{`
           .animate-spin-slow {
             animation: spin 11s linear infinite;
@@ -307,7 +295,6 @@ export default function Navbar({
           }
         `}</style>
       </nav>
-      {/* Modal de conexión */}
       <WalletModal
         open={walletModalOpen}
         onClose={() => setWalletModalOpen(false)}

@@ -1,4 +1,3 @@
-// src/App.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   useAccount,
@@ -53,8 +52,7 @@ const publicClient = createPublicClient({
 
 function AppContent() {
   const [currentSection, setCurrentSection] = useState('home');
-  // Ahora el estado guarda el ancho REAL del sidebar en píxeles, recibido de Sidebar.jsx
-  const [sidebarWidthPx, setSidebarWidthPx] = useState(56); // Valor inicial para w-14 (56px)
+  const [sidebarWidthPx, setSidebarWidthPx] = useState(56);
   const [showVideoModal, setShowVideoModal] = useState(false);
 
   const { address, isConnected, chain } = useAccount();
@@ -80,7 +78,6 @@ function AppContent() {
     setShowModal(false);
     setMessage('');
   }, []);
-
 
   const { data: hgpTokenBalanceData, refetch: refetchHGPBalance } = useReadContract({
     ...HGP_TOKEN_CONFIG,
@@ -121,12 +118,6 @@ function AppContent() {
   });
 
   useEffect(() => {
-    console.log("Estado de la conexión (desde AppContent):", { address, isConnected, chain });
-    console.log("   Dirección de HGP ERC20 configurada:", HGP_TOKEN_CONFIG.address);
-    console.log("   Dirección de HPNFT ERC721 configurada:", NFT_CONTRACT_CONFIG.address);
-    console.log("   Dirección de HGP Staking configurada:", STAKING_CONTRACT_CONFIG.address);
-    console.log("   Dirección de HGP DAO configurada:", DAO_CONTRACT_CONFIG.address);
-
     if (isConnected && address) {
       refetchHGPBalance();
       refetchNftBalance();
@@ -138,9 +129,7 @@ function AppContent() {
   const formattedHgpBalance = hgpTokenBalanceData !== undefined ? formatUnits(hgpTokenBalanceData, decimals) : '0.0';
   const formattedTotalHGPSupply = hgpTotalSupplyData !== undefined ? formatUnits(hgpTotalSupplyData, decimals) : 'Cargando...';
   const formattedNftCount = nftBalanceData !== undefined ? nftBalanceData.toString() : '0';
-
   const formattedBNBBalance = balanceData?.value !== undefined ? formatUnits(balanceData.value, 18) : '0.0';
-
 
   const handleLaunchDapp = useCallback(() => {
     setCurrentSection('news-announcements');
@@ -209,7 +198,6 @@ function AppContent() {
         return <AboutSection {...commonSectionProps} />;
       case 'tech':
         return <TechStackSection {...commonSectionProps} />;
-
       case 'trading-analytics':
         return <TradingAndAnalyticsSection
                   isConnected={isConnected}
@@ -266,30 +254,22 @@ function AppContent() {
             connectors={connectors}
             pendingConnector={pendingConnector}
             disconnect={disconnect}
+            HGP_TOKEN_CONFIG={HGP_TOKEN_CONFIG}
           />
 
           <div className="flex flex-1 pt-[72px]">
-            {/* Sidebar Lateral */}
             <Sidebar onNavigate={setCurrentSection} currentSection={currentSection} onExpandChange={setSidebarWidthPx} />
-
-            {/* Área de Contenido Principal
-                Aplicamos el padding-left dinámicamente usando el estado `sidebarWidthPx`.
-                Esto asegura que el contenido siempre empiece después del sidebar,
-                sin importar el ancho de la pantalla o si el sidebar está colapsado/expandido.
-                Sumamos un padding adicional (p-4 = 16px) a la izquierda para una mejor separación.
-            */}
             <main
               className={`flex-grow p-4 md:p-6 lg:p-8 transition-all duration-300 ease-in-out`}
-              style={{ paddingLeft: `${sidebarWidthPx + 16}px` }} // Agrega un padding base de 16px
+              style={{ paddingLeft: `${sidebarWidthPx + 16}px` }}
             >
               {renderCurrentSection()}
             </main>
           </div>
 
-          {/* Footer */}
           <footer
             className={`bg-gray-900 shadow-inner p-6 text-center text-gray-300 text-sm border-t border-purple-700 transition-all duration-300 ease-in-out`}
-            style={{ paddingLeft: `${sidebarWidthPx + 16}px` }} // El footer también necesita el padding
+            style={{ paddingLeft: `${sidebarWidthPx + 16}px` }}
           >
             <p>© 2025 HighPower DApp. Todos los derechos reservados.</p>
           </footer>
