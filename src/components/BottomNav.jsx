@@ -13,8 +13,8 @@ const modules = [
     { name: "Incubación", path: "/incubation", icon: "fa-lightbulb" }
   ] },
   { label: "Finanzas", icon: "fa-wallet", items: [
-    { name: "Swap", path: "/swap", icon: "fa-sync-alt" },
-    { name: "Staking", path: "/staking", icon: "fa-coins" },
+    { name: "Swap", path: "/swap", icon: "fa-sync-alt" }, // Solo funciona si agregas la ruta en App.jsx
+    { name: "Staking", path: "/yield", icon: "fa-coins" },
     { name: "Trading/Analytics", path: "/trading-analytics", icon: "fa-chart-line" }
   ] },
   { label: "NFTs", icon: "fa-gem", items: [
@@ -27,7 +27,7 @@ const modules = [
     { name: "Contacto", path: "/contact", icon: "fa-envelope" }
   ] },
   { label: "Seguridad", icon: "fa-shield-alt", items: [
-    { name: "Auditoría", path: "/audit", icon: "fa-user-shield" }
+    { name: "Auditoría", path: "/audit-security", icon: "fa-user-shield" }
   ] }
 ];
 

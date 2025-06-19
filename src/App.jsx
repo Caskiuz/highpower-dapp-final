@@ -43,6 +43,7 @@ import FAQSection from './sections/FAQSection';
 import NewsAnnouncementsSection from './sections/NewsAnnouncementsSection';
 import IncubationSection from './sections/IncubationSection';
 import TradingAndAnalyticsSection from './sections/TradingAndAnalyticsSection';
+import SwapSection from './sections/SwapSection'; // <-- NUEVO IMPORT
 
 const publicClient = createPublicClient({
   chain: bscTestnet,
@@ -262,6 +263,7 @@ function AppContent() {
                           showCustomModal={showCustomModal}
                         />
                       } />
+                      <Route path="/swap" element={<SwapSection {...commonSectionProps} {...balanceProps} />} /> {/* NUEVA RUTA */}
                       {/* Fallback to news */}
                       <Route path="*" element={<Navigate to="/news" replace />} />
                     </Routes>

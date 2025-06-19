@@ -21,7 +21,7 @@ const modules = [
     icon: "fa-wallet",
     items: [
       { name: "Swap", path: "/swap", icon: "fa-sync-alt" },
-      { name: "Staking", path: "/staking", icon: "fa-coins" },
+      { name: "Staking", path: "/yield", icon: "fa-coins" },
       { name: "Trading/Analytics", path: "/trading-analytics", icon: "fa-chart-line" }
     ]
   },
@@ -46,7 +46,7 @@ const modules = [
     label: "SEGURIDAD & TRANSPARENCIA",
     icon: "fa-shield-alt",
     items: [
-      { name: "Auditoría", path: "/audit", icon: "fa-user-shield" }
+      { name: "Auditoría", path: "/audit-security", icon: "fa-user-shield" }
     ]
   }
 ];
