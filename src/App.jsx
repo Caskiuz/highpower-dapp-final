@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import {
   useAccount,
   useBalance,
@@ -10,6 +10,7 @@ import {
 import { bscTestnet } from 'wagmi/chains';
 import { formatUnits, createPublicClient, http } from 'viem';
 
+import BottomNav from './components/BottomNav';
 import {
   HGP_TOKEN_CONFIG,
   NFT_CONTRACT_CONFIG,
@@ -125,9 +126,8 @@ function AppContent() {
   const formattedNftCount = nftBalanceData !== undefined ? nftBalanceData.toString() : '0';
   const formattedBNBBalance = balanceData?.value !== undefined ? formatUnits(balanceData.value, 18) : '0.0';
 
-  // Responsive sidebar width
+  // Responsive sidebar width solo para escritorio
   const [sidebarWidthPx, setSidebarWidthPx] = useState(56);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Common props for sections
   const commonSectionProps = {
@@ -154,15 +154,7 @@ function AppContent() {
     formattedBNBBalance,
   };
 
-  // Sidebar for mobile
-  const SidebarDrawer = ({ children }) => (
-    <aside className={`fixed z-50 top-0 left-0 w-56 h-full bg-gray-900 flex-col md:hidden transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
-      {children}
-      <button onClick={() => setSidebarOpen(false)} className="absolute top-4 right-4 text-white text-2xl">&times;</button>
-    </aside>
-  );
-
-  // Nuevo: wrapper para el contenido que ajusta padding-left según sidebarWidthPx
+  // Wrapper para el contenido que ajusta padding-left según sidebarWidthPx solo en escritorio
   const ContentWrapper = ({ children }) => (
     <div
       className="flex-1 flex flex-col"
@@ -224,19 +216,7 @@ function AppContent() {
             path="*"
             element={
               <div className="flex flex-1 flex-col md:flex-row pt-[0px]">
-                {/* Mobile hamburger navbar */}
-                <nav className="flex items-center justify-between px-4 py-3 bg-gray-800 md:hidden">
-                  <button onClick={() => setSidebarOpen(true)}>
-                    <i className="fas fa-bars text-xl text-white"></i>
-                  </button>
-                  <span className="ml-2 text-lg font-bold text-green-400">HighPower</span>
-                </nav>
-
-                {/* Sidebar drawer mobile */}
-                <SidebarDrawer>
-                  <Sidebar onExpandChange={setSidebarWidthPx} closeSidebar={() => setSidebarOpen(false)} />
-                </SidebarDrawer>
-                {/* Sidebar permanent desktop */}
+                {/* Sidebar solo escritorio */}
                 <aside className="hidden md:flex">
                   <Sidebar onExpandChange={setSidebarWidthPx} />
                 </aside>
@@ -286,13 +266,8 @@ function AppContent() {
                       <Route path="*" element={<Navigate to="/news" replace />} />
                     </Routes>
                   </main>
-                  {/* Bottom nav mobile */}
-                  <nav className="fixed bottom-0 left-0 right-0 bg-gray-900 flex md:hidden justify-around py-2 border-t border-purple-800 z-40">
-                    <NavButton to="/news" icon="fa-bolt" label="News" />
-                    <NavButton to="/dashboard" icon="fa-tachometer-alt" label="Dashboard" />
-                    <NavButton to="/nfts" icon="fa-image" label="NFTs" />
-                    <NavButton to="/governance" icon="fa-users" label="DAO" />
-                  </nav>
+                  {/* Bottom nav mobile profesional SOLO móvil */}
+                  <BottomNav />
                   {/* Footer */}
                   <footer
                     className={`bg-gray-900 shadow-inner p-6 text-center text-gray-300 text-sm border-t border-purple-700 transition-all duration-300 ease-in-out`}
@@ -306,17 +281,6 @@ function AppContent() {
         </Routes>
       </div>
     </Router>
-  );
-}
-
-// NavButton for mobile bottom nav
-function NavButton({ to, icon, label }) {
-  const navigate = useNavigate();
-  return (
-    <button className="text-white flex flex-col items-center text-sm" onClick={() => navigate(to)}>
-      <i className={`fas ${icon}`}></i>
-      <span>{label}</span>
-    </button>
   );
 }
 

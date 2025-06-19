@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-// Mismos módulos que tu sidebar, pero solo el icono principal
 const modules = [
   { label: "Plataforma", icon: "fa-home", items: [
     { name: "News", path: "/news", icon: "fa-bolt" },
@@ -36,7 +35,6 @@ export default function BottomNav() {
   const [openMenu, setOpenMenu] = useState(null);
   const navigate = useNavigate();
 
-  // Navegación directa si solo hay un item, o abre menú si hay varios
   const handleNavClick = (idx) => {
     if (modules[idx].items.length === 1) {
       navigate(modules[idx].items[0].path);
@@ -47,7 +45,7 @@ export default function BottomNav() {
 
   return (
     <>
-      {/* Menú Modal para submenús */}
+      {/* Modal de submenú */}
       {openMenu !== null && (
         <div className="fixed inset-0 z-50 bg-black bg-opacity-60 flex justify-center items-end md:hidden"
           onClick={() => setOpenMenu(null)}>
@@ -78,7 +76,7 @@ export default function BottomNav() {
         </div>
       )}
 
-      {/* Barra de navegación inferior */}
+      {/* Barra inferior solo móvil */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#19162d] border-t border-[var(--primary-purple)] flex justify-around items-center h-16 shadow-2xl md:hidden">
         {modules.map((mod, idx) => (
           <button

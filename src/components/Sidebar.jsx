@@ -4,7 +4,7 @@ import { NavLink, useLocation } from "react-router-dom";
 const modules = [
   {
     label: "PLATAFORMA",
-    icon: "fa-home", // Cambiado a ícono seguro de FontAwesome Free
+    icon: "fa-home",
     items: [
       { name: "News", path: "/news", icon: "fa-bolt" },
       { name: "Dashboard", path: "/dashboard", icon: "fa-gauge" },
@@ -34,7 +34,7 @@ const modules = [
   },
   {
     label: "COMUNIDAD & GOBERNANZA",
-    icon: "fa-users", // Cambiado a ícono seguro de FontAwesome Free
+    icon: "fa-users",
     items: [
       { name: "DAO", path: "/governance", icon: "fa-users-cog" },
       { name: "Soporte", path: "/support", icon: "fa-headset" },
@@ -44,7 +44,7 @@ const modules = [
   },
   {
     label: "SEGURIDAD & TRANSPARENCIA",
-    icon: "fa-shield-alt", // Cambiado a ícono seguro de FontAwesome Free
+    icon: "fa-shield-alt",
     items: [
       { name: "Auditoría", path: "/audit", icon: "fa-user-shield" }
     ]
@@ -52,7 +52,6 @@ const modules = [
 ];
 
 const SIDEBAR_EXPANDED_KEY = "hgp_sidebar_expanded";
-// Ajusta este valor si tu navbar tiene otra altura (ej: 56px, 72px, etc)
 const NAVBAR_HEIGHT = 64; // px
 
 export default function Sidebar() {
@@ -69,12 +68,10 @@ export default function Sidebar() {
   });
   const [activeModule, setActiveModule] = useState(null);
 
-  // Guardar estado en localStorage
   useEffect(() => {
     localStorage.setItem(SIDEBAR_EXPANDED_KEY, JSON.stringify(expanded));
   }, [expanded]);
 
-  // Contraer al click fuera
   useEffect(() => {
     function handleClickOutside(event) {
       if (
@@ -92,7 +89,6 @@ export default function Sidebar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [expanded]);
 
-  // Click en icono principal
   const handleMainIconClick = (idx) => {
     if (!expanded) {
       setExpanded(true);
@@ -146,7 +142,6 @@ export default function Sidebar() {
                       : "drop-shadow(0 0 4px #8f5bff88)"
                 }}
               />
-              {/* SOLO muestra texto y flecha si expandido */}
               {expanded && (
                 <>
                   <span className="ml-3 font-bold text-base whitespace-nowrap">{mod.label}</span>
@@ -156,7 +151,6 @@ export default function Sidebar() {
                 </>
               )}
             </button>
-            {/* SUBMENÚ SOLO SI EXPANDIDO Y ACTIVO */}
             {expanded && activeModule === idx && (
               <div className="flex flex-col mt-1 ml-8 animate-fade-in">
                 {mod.items.map((item) => (

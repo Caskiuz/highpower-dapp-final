@@ -1,10 +1,10 @@
 :root {
-  --primary-purple: #6B46C1;
-  --secondary-blue: #4299E1;
+  --primary-purple: #8f5bff;
+  --secondary-blue: #5bc0ff;
   --accent-green: #6EE7B7;
   --accent-yellow: #FBBF24;
-  --dark-gray: #1A202C;
-  --light-gray-text: #CBD5E0;
+  --dark-gray: #181629;
+  --light-gray-text: #bcbef7;
   --off-white: #F7FAFC;
 }
 
@@ -85,4 +85,35 @@ code {
     transform: scale(0);
     opacity: 0;
   }
+}
+
+/* ---- AGREGADOS VISUALES Y ANIMACIONES ---- */
+@keyframes spin-slow {
+  100% { transform: rotate(360deg); }
+}
+.animate-spin-slow {
+  animation: spin-slow 3.5s linear infinite;
+}
+
+.neon-glow {
+  box-shadow: 0 0 16px #a259ffcc, 0 0 42px #6B46C1b0;
+}
+
+.sidebar-icon-glow {
+  filter: drop-shadow(0 0 4px #a259ffcc) drop-shadow(0 0 12px #6B46C120);
+}
+
+/* Neon effect y animaciones para sidebar */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(40px);}
+  to { opacity: 1; transform: translateY(0);}
+}
+.animate-fade-in {
+  animation: fade-in 0.23s cubic-bezier(0.6,0.4,0.15,1) both;
+}
+
+/* Navbar encima del sidebar */
+nav, .navbar {
+  z-index: 50;
+  position: relative;
 }
