@@ -162,6 +162,20 @@ function AppContent() {
     </aside>
   );
 
+  // Nuevo: wrapper para el contenido que ajusta padding-left según sidebarWidthPx
+  const ContentWrapper = ({ children }) => (
+    <div
+      className="flex-1 flex flex-col"
+      style={{
+        transition: "padding-left 0.25s cubic-bezier(.4,0,.2,1)",
+        paddingLeft: window.innerWidth >= 768 ? `${sidebarWidthPx}px` : 0,
+        minHeight: "100vh"
+      }}
+    >
+      {children}
+    </div>
+  );
+
   return (
     <Router>
       <div className="min-h-screen bg-[var(--dark-gray)] text-[var(--light-gray-text)] flex flex-col font-sans">
@@ -223,11 +237,11 @@ function AppContent() {
                   <Sidebar onExpandChange={setSidebarWidthPx} closeSidebar={() => setSidebarOpen(false)} />
                 </SidebarDrawer>
                 {/* Sidebar permanent desktop */}
-                <aside className="hidden md:flex w-56 bg-gray-900 flex-col">
+                <aside className="hidden md:flex">
                   <Sidebar onExpandChange={setSidebarWidthPx} />
                 </aside>
-                {/* Main layout */}
-                <div className="flex-1 flex flex-col">
+                {/* Main layout envuelto en ContentWrapper */}
+                <ContentWrapper>
                   <Navbar
                     isConnected={isConnected}
                     address={address}
@@ -285,7 +299,7 @@ function AppContent() {
                   >
                     <p>© 2025 HighPower DApp. All rights reserved.</p>
                   </footer>
-                </div>
+                </ContentWrapper>
               </div>
             }
           />
