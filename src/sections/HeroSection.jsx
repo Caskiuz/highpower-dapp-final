@@ -38,72 +38,6 @@ function AnimatedBlockchainBg() {
   );
 }
 
-export default function HeroSection({ onLaunchDapp, onShowVideo }) {
-  return (
-    <section className="relative w-full min-h-screen flex flex-col items-center justify-center text-center overflow-x-hidden bg-black px-2 sm:px-4 py-10 sm:py-16">
-      {/* Fondo animado tipo blockchain */}
-      <AnimatedBlockchainBg />
-
-      {/* Hero content */}
-      <div className="relative z-10 w-full max-w-2xl flex flex-col items-center justify-center">
-        {/* Logo/Token */}
-        <span className="text-5xl sm:text-6xl font-extrabold text-white tracking-wide drop-shadow-lg mb-4 select-none">
-          HGP
-        </span>
-        {/* Eslogan */}
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2 drop-shadow-lg">
-          Potencia la Economía Descentralizada
-        </h1>
-        <p className="text-base sm:text-lg md:text-xl text-indigo-200 mb-6 max-w-[95vw]">
-          Tu Ecosistema Definitivo para Tokens, NFTs y Rendimientos Sostenibles.<br />
-          <span className="text-indigo-400 font-semibold">
-            HighPower: Staking, Liquidez y NFTs en la BSC Testnet.
-          </span>
-        </p>
-        {/* Botones */}
-        <div className="flex flex-col sm:flex-row gap-4 w-full justify-center mb-5">
-          <button
-            onClick={onLaunchDapp}
-            className="w-full sm:w-auto px-8 py-3 bg-indigo-600 text-white font-bold text-lg rounded-full shadow-xl
-                       hover:bg-indigo-500 transition duration-300 transform hover:scale-105"
-          >
-            Launch App
-          </button>
-          <button
-            onClick={onShowVideo}
-            className="w-full sm:w-auto px-8 py-3 bg-transparent border-2 border-indigo-400 text-indigo-200 font-bold text-lg rounded-full shadow-xl
-                       hover:bg-indigo-400 hover:text-black transition duration-300 transform hover:scale-105"
-          >
-            ¿Qué es Web3 y DeFi?
-          </button>
-        </div>
-        {/* Métricas */}
-        <div className="flex flex-col sm:flex-row gap-3 justify-center w-full mb-6">
-          <MetricCard label="TVL" value="$0" />
-          <MetricCard label="Usuarios" value="0" />
-          <MetricCard label="Pools activos" value="0" />
-          <MetricCard label="NFTs emitidos" value="0" />
-        </div>
-        {/* Redes Sociales */}
-        <div className="flex flex-row justify-center gap-5 mb-2">
-          <SocialIcon href="https://twitter.com/highpowercoin" icon="twitter" />
-          <SocialIcon href="https://t.me/highpowercommunity" icon="telegram" />
-          <SocialIcon href="https://discord.com/invite/highpower" icon="discord" />
-          <SocialIcon href="https://medium.com/highpower" icon="medium" />
-        </div>
-      </div>
-      {/* Animación CSS para el fondo SVG */}
-      <style>{`
-        @keyframes fade-in-slow {
-          0% { opacity: 0; }
-          100% { opacity: 1; }
-        }
-        .animate-fade-in-slow { animation: fade-in-slow 2s ease-out forwards; }
-      `}</style>
-    </section>
-  );
-}
-
 function MetricCard({ label, value }) {
   return (
     <div className="bg-black/40 rounded-lg px-5 py-3 flex flex-col items-center shadow-md border border-gray-800 min-w-[90px] sm:min-w-[120px] mb-2 sm:mb-0">
@@ -145,5 +79,71 @@ function SocialIcon({ href, icon }) {
     >
       {icons[icon]}
     </a>
+  );
+}
+
+export default function HeroSection({ onLaunchDapp, onShowVideo }) {
+  return (
+    <section className="relative w-full min-h-screen flex flex-col items-center justify-center text-center overflow-x-hidden bg-black px-2 sm:px-4 py-10 sm:py-16">
+      {/* Fondo animado tipo blockchain */}
+      <AnimatedBlockchainBg />
+
+      {/* Hero content */}
+      <div className="relative z-10 w-full max-w-2xl flex flex-col items-center justify-center">
+        {/* Logo/Token */}
+        <span className="text-5xl sm:text-6xl font-extrabold text-white tracking-wide drop-shadow-lg mb-4 select-none">
+          HGP
+        </span>
+        {/* Eslogan */}
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2 drop-shadow-lg">
+          Boosting the Decentralized Economy
+        </h1>
+        <p className="text-base sm:text-lg md:text-xl text-indigo-200 mb-6 max-w-[95vw]">
+          Your ultimate ecosystem for tokens, NFTs, and sustainable yields.<br />
+          <span className="text-indigo-400 font-semibold">
+            HighPower: Staking, Liquidity, and NFTs on BSC Testnet.
+          </span>
+        </p>
+        {/* Botones */}
+        <div className="flex flex-col sm:flex-row gap-4 w-full justify-center mb-5">
+          <button
+            onClick={onLaunchDapp}
+            className="w-full sm:w-auto px-8 py-3 bg-indigo-600 text-white font-bold text-lg rounded-full shadow-xl
+                       hover:bg-indigo-500 transition duration-300 transform hover:scale-105"
+          >
+            Launch App
+          </button>
+          <button
+            onClick={onShowVideo}
+            className="w-full sm:w-auto px-8 py-3 bg-transparent border-2 border-indigo-400 text-indigo-200 font-bold text-lg rounded-full shadow-xl
+                       hover:bg-indigo-400 hover:text-black transition duration-300 transform hover:scale-105"
+          >
+            What is Web3 and DeFi?
+          </button>
+        </div>
+        {/* Métricas */}
+        <div className="flex flex-col sm:flex-row gap-3 justify-center w-full mb-6">
+          <MetricCard label="TVL" value="$0" />
+          <MetricCard label="Users" value="0" />
+          <MetricCard label="Active Pools" value="0" />
+          <MetricCard label="NFTs minted" value="0" />
+        </div>
+        {/* Redes Sociales */}
+        <div className="flex flex-row justify-center gap-5 mb-2">
+          <SocialIcon href="https://twitter.com/highpowercoin" icon="twitter" />
+          <SocialIcon href="https://t.me/highpowercommunity" icon="telegram" />
+          <SocialIcon href="https://discord.com/invite/highpower" icon="discord" />
+          <SocialIcon href="https://medium.com/highpower" icon="medium" />
+        </div>
+      </div>
+      {/* Animación CSS para el fondo SVG */}
+      <style>{`
+        @keyframes fade-in-slow {
+          0% { opacity: 0; }
+          100% { opacity: 1; }
+        }
+        .animate-fade-in-slow { animation: fade-in-slow 2s ease-out forwards; }
+      `}</style>
+    </section>
   );
 }

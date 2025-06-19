@@ -1,86 +1,130 @@
 import React, { useState, useEffect } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 
-function Sidebar({ onNavigate, currentSection, onExpandChange }) {
+const modules = [
+  {
+    label: 'Main',
+    items: [
+      { name: 'News', path: '/news', icon: 'fa-newspaper' },
+      { name: 'Dashboard', path: '/dashboard', icon: 'fa-gauge-high' },
+    ],
+  },
+  {
+    label: 'Trading & Yield',
+    items: [
+      { name: 'Trading & Analytics', path: '/trading-analytics', icon: 'fa-chart-line' },
+      { name: 'Yield', path: '/yield', icon: 'fa-coins' },
+      { name: 'NFTs', path: '/nfts', icon: 'fa-store' },
+    ],
+  },
+  {
+    label: 'Ecosystem',
+    items: [
+      { name: 'Roadmap', path: '/roadmap', icon: 'fa-road' },
+      { name: 'Tokenomics', path: '/tokenomics', icon: 'fa-chart-pie' },
+      { name: 'Incubation', path: '/incubation', icon: 'fa-seedling' },
+      { name: 'Partners', path: '/partners', icon: 'fa-handshake' },
+      { name: 'Team', path: '/team', icon: 'fa-users' },
+      { name: 'Governance', path: '/governance', icon: 'fa-gavel' },
+    ],
+  },
+  {
+    label: 'Utilities',
+    items: [
+      { name: 'FAQ', path: '/faq', icon: 'fa-circle-question' },
+      { name: 'Whitepaper', path: '/whitepaper', icon: 'fa-file-lines' },
+      { name: 'Audit', path: '/audit-security', icon: 'fa-shield-halved' },
+      { name: 'Tech Stack', path: '/tech', icon: 'fa-microchip' },
+      { name: 'About', path: '/about', icon: 'fa-info-circle' },
+    ],
+  },
+  {
+    label: 'Support & Community',
+    items: [
+      { name: 'Support', path: '/support', icon: 'fa-headset' },
+      { name: 'Contact', path: '/contact', icon: 'fa-envelope' },
+    ],
+  },
+];
+
+function Sidebar({ onExpandChange, closeSidebar }) {
   const [isHovered, setIsHovered] = useState(false);
+  const [expandedModules, setExpandedModules] = useState([0]);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
-      if (window.innerWidth >= 768) setDrawerOpen(false);
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const actualIsExpanded = !isMobile && isHovered;
-
   useEffect(() => {
     let sidebarWidthPx;
     if (isMobile) {
-      sidebarWidthPx = drawerOpen ? Math.min(window.innerWidth * 0.8, 320) : 0;
+      sidebarWidthPx = 0;
     } else if (actualIsExpanded) {
       sidebarWidthPx = window.innerWidth >= 1024 ? 256 : 224;
     } else {
       sidebarWidthPx = 80;
     }
-    onExpandChange(sidebarWidthPx);
-  }, [actualIsExpanded, isMobile, drawerOpen, onExpandChange]);
+    if (onExpandChange) onExpandChange(sidebarWidthPx);
+  }, [actualIsExpanded, isMobile, onExpandChange]);
 
-  const navItems = [
-    { name: 'Inicio', path: 'home', icon: 'fa-house' },
-    { name: 'Noticias', path: 'news-announcements', icon: 'fa-newspaper' },
-    { name: 'Dashboard', path: 'dashboard', icon: 'fa-gauge-high' },
-    { name: 'Whitepaper', path: 'whitepaper', icon: 'fa-file-lines' },
-    { name: 'Roadmap', path: 'roadmap', icon: 'fa-road' },
-    { name: 'Auditorías', path: 'audit-security', icon: 'fa-shield-halved' },
-    { name: 'Tokenomics', path: 'tokenomics', icon: 'fa-chart-pie' },
-    { name: 'Recompensas', path: 'yield', icon: 'fa-coins' },
-    { name: 'Metamarket', path: 'nfts', icon: 'fa-store' },
-    { name: 'Gobernanza', path: 'dao', icon: 'fa-gavel' },
-    { name: 'Trading & Analíticas', path: 'trading-analytics', icon: 'fa-chart-line' },
-    { name: 'Incubadora', path: 'incubation', icon: 'fa-seedling' },
-    { name: 'Socios', path: 'partners-ecosystem', icon: 'fa-handshake' },
-    { name: 'Equipo', path: 'team', icon: 'fa-users' },
-    { name: 'FAQ', path: 'faq', icon: 'fa-circle-question' },
-    { name: 'Soporte', path: 'support', icon: 'fa-headset' },
-    { name: 'Contacto', path: 'contact', icon: 'fa-envelope' },
-    { name: 'Nosotros', path: 'about', icon: 'fa-info-circle' },
-    { name: 'Tech Stack', path: 'tech', icon: 'fa-microchip' },
-  ];
+  function toggleModule(idx) {
+    setExpandedModules((prev) =>
+      prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx]
+    );
+  }
 
-  const NavList = ({ expanded, onItemClick }) => (
-    <div className="flex flex-col items-center flex-grow overflow-y-auto custom-scrollbar">
-      {navItems.map((item) => (
-        <button
-          key={item.path}
-          onClick={() => {
-            onItemClick(item.path);
-            if (isMobile) setDrawerOpen(false);
-          }}
-          className={`group flex items-center p-3 my-1 w-full rounded-lg
-            transition-all duration-300 ease-in-out transform hover:scale-105 hover:bg-gray-800 hover:shadow-lg
-            ${currentSection === item.path
-              ? 'bg-primary-purple text-white shadow-lg'
-              : 'text-gray-400 hover:text-white'}
-            ${expanded ? 'justify-start px-4' : 'justify-center'}`}
-          title={item.name}
-        >
-          <i className={`fas ${item.icon} text-2xl ${expanded ? 'mr-3' : ''}`}></i>
-          {expanded && (
-            <span
-              className={`font-semibold text-sm whitespace-nowrap overflow-hidden 
-                opacity-100 max-w-full 
-                ${currentSection === item.path ? 'text-white' : 'text-gray-400 group-hover:text-white'}
-                transition-all duration-200 ease-in-out`}
-            >
-              {item.name}
-            </span>
-          )}
-        </button>
+  // Arreglo: los íconos de los items SIEMPRE visibles, solo el texto se oculta al colapsar.
+  const NavList = ({ expanded }) => (
+    <nav className="flex flex-col flex-grow overflow-y-auto custom-scrollbar">
+      {modules.map((mod, idx) => (
+        <div key={mod.label} className="mb-2">
+          <button
+            className={`flex items-center w-full px-3 py-2 text-left font-bold text-xs uppercase tracking-wider 
+              ${expanded ? "text-primary-purple" : "text-gray-400"} transition-colors`}
+            onClick={() => toggleModule(idx)}
+            tabIndex={0}
+          >
+            <i className={`fas fa-caret-${expandedModules.includes(idx) ? "down" : "right"} mr-2`} />
+            {expanded && mod.label}
+          </button>
+          <div className={`transition-all duration-200 ml-1 ${expandedModules.includes(idx) ? "max-h-96 opacity-100" : "max-h-0 opacity-0 overflow-hidden"}`}>
+            {mod.items.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                className={({ isActive }) => `
+                  group flex items-center p-3 my-1 w-full rounded-lg
+                  transition-all duration-300 ease-in-out transform hover:scale-105 hover:bg-gray-800 hover:shadow-lg
+                  ${isActive ? 'bg-primary-purple text-white shadow-lg' : 'text-gray-400 hover:text-white'}
+                  ${expanded ? 'justify-start px-4' : 'justify-center'}
+                `}
+                title={item.name}
+                onClick={() => {
+                  if (isMobile && closeSidebar) closeSidebar();
+                }}
+              >
+                {/* Ícono siempre visible */}
+                <i className={`fas ${item.icon} text-2xl ${expanded ? 'mr-3' : ''}`} />
+                {/* Texto solo si expandido */}
+                {expanded && (
+                  <span className={`font-semibold text-sm whitespace-nowrap overflow-hidden 
+                    opacity-100 max-w-full 
+                    transition-all duration-200 ease-in-out`}>
+                    {item.name}
+                  </span>
+                )}
+              </NavLink>
+            ))}
+          </div>
+        </div>
       ))}
-    </div>
+    </nav>
   );
 
   // Desktop
@@ -93,7 +137,7 @@ function Sidebar({ onNavigate, currentSection, onExpandChange }) {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <NavList expanded={actualIsExpanded} onItemClick={onNavigate} />
+        <NavList expanded={actualIsExpanded} />
         <style>{`
           .custom-scrollbar::-webkit-scrollbar { width: 8px; }
           .custom-scrollbar::-webkit-scrollbar-track { background: var(--dark-gray); border-radius: 10px; }
@@ -106,47 +150,15 @@ function Sidebar({ onNavigate, currentSection, onExpandChange }) {
 
   // Mobile
   return (
-    <>
-      <button
-        className="fixed top-4 left-3 z-40 bg-black/80 border border-primary-purple rounded-full p-2 text-white shadow-lg md:hidden"
-        onClick={() => setDrawerOpen(true)}
-        aria-label="Abrir menú lateral"
-        style={{ width: 44, height: 44 }}
-      >
-        <i className="fas fa-bars text-2xl" />
-      </button>
-
-      <div
-        className={`fixed inset-0 z-50 transition-all duration-300 md:hidden
-          ${drawerOpen ? "visible opacity-100" : "invisible opacity-0"}`}
-        style={{ pointerEvents: drawerOpen ? "auto" : "none" }}
-      >
-        <div
-          className={`absolute inset-0 bg-black/80 transition-opacity duration-300 ${drawerOpen ? "opacity-100" : "opacity-0"}`}
-          onClick={() => setDrawerOpen(false)}
-        />
-        <nav
-          className={`absolute top-0 left-0 h-full bg-gray-900 border-r border-primary-purple pt-[72px] shadow-2xl
-            transition-transform duration-300 w-[80vw] max-w-xs flex flex-col
-            ${drawerOpen ? 'translate-x-0' : '-translate-x-full'}`}
-        >
-          <button
-            className="absolute top-4 right-4 text-3xl text-primary-purple focus:outline-none"
-            onClick={() => setDrawerOpen(false)}
-            aria-label="Cerrar menú lateral"
-          >
-            &times;
-          </button>
-          <NavList expanded={true} onItemClick={onNavigate} />
-        </nav>
-        <style>{`
-          .custom-scrollbar::-webkit-scrollbar { width: 8px; }
-          .custom-scrollbar::-webkit-scrollbar-track { background: var(--dark-gray); border-radius: 10px; }
-          .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--primary-purple); border-radius: 10px; }
-          .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--secondary-blue); }
-        `}</style>
-      </div>
-    </>
+    <div className="pt-[72px] bg-gray-900 h-full w-full flex flex-col">
+      <NavList expanded={true} />
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: var(--dark-gray); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--primary-purple); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--secondary-blue); }
+      `}</style>
+    </div>
   );
 }
 
