@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import {
   useAccount,
@@ -23,6 +23,7 @@ import CursorTrail from './components/CursorTrail';
 import CustomModal from './components/CustomModal';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
+import WalletModal from './components/WalletModal'; // <--- IMPORTA TU MODAL
 
 import HeroSection from './sections/HeroSection';
 import DashboardSection from './sections/DashboardSection';
@@ -65,6 +66,9 @@ function AppContent() {
   const [message, setMessage] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
+
+  // --- WALLET MODAL STATE ---
+  const [showWalletModal, setShowWalletModal] = useState(false);
 
   const showCustomModal = useCallback((msg) => {
     setMessage(msg);
@@ -113,7 +117,7 @@ function AppContent() {
     },
   });
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (isConnected && address) {
       refetchHGPBalance();
       refetchNftBalance();
@@ -169,6 +173,47 @@ function AppContent() {
     </div>
   );
 
+  // --- WALLET MODAL LOGIC ---
+  // Mapea el id de wallet a connector de wagmi
+  const getConnectorByWalletId = (id) => {
+    if (!Array.isArray(connectors)) return undefined;
+    switch (id) {
+      case "metamask":
+        return connectors.find((c) => c.id === "metaMask" || c.name.toLowerCase().includes("metamask"));
+      case "walletconnect":
+        return connectors.find((c) => c.id === "walletConnect" || c.name.toLowerCase().includes("walletconnect"));
+      case "coinbase":
+        return connectors.find((c) => c.id === "coinbaseWallet" || c.name.toLowerCase().includes("coinbase"));
+      case "trustwallet":
+        return connectors.find((c) => c.name.toLowerCase().includes("trust"));
+      case "okx":
+        return connectors.find((c) => c.name.toLowerCase().includes("okx"));
+      case "binancechain":
+        return connectors.find((c) => c.name.toLowerCase().includes("binance"));
+      case "opera":
+        return connectors.find((c) => c.name.toLowerCase().includes("opera"));
+      case "brave":
+        return connectors.find((c) => c.name.toLowerCase().includes("brave"));
+      case "rabby":
+        return connectors.find((c) => c.name.toLowerCase().includes("rabby"));
+      case "math":
+        return connectors.find((c) => c.name.toLowerCase().includes("math"));
+      default:
+        return connectors[0];
+    }
+  };
+
+  const handleConnectWallet = () => setShowWalletModal(true);
+  const handleCloseWalletModal = () => setShowWalletModal(false);
+
+  const handleSelectWallet = (walletId) => {
+    const connector = getConnectorByWalletId(walletId);
+    if (connector) {
+      connect({ connector });
+    }
+    setShowWalletModal(false);
+  };
+
   return (
     <Router>
       <div className="min-h-screen bg-[var(--dark-gray)] text-[var(--light-gray-text)] flex flex-col font-sans">
@@ -198,6 +243,13 @@ function AppContent() {
         )}
 
         <CursorTrail />
+
+        {/* --- WALLET MODAL --- */}
+        <WalletModal
+          open={showWalletModal}
+          onClose={handleCloseWalletModal}
+          onSelectWallet={handleSelectWallet}
+        />
 
         {/* Routes */}
         <Routes>
@@ -229,7 +281,7 @@ function AppContent() {
                     balanceData={balanceData}
                     hgpBalance={formattedHgpBalance}
                     nftCount={formattedNftCount}
-                    connect={connect}
+                    connect={handleConnectWallet} 
                     connectors={connectors}
                     pendingConnector={pendingConnector}
                     disconnect={disconnect}
