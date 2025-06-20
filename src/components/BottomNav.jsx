@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+// Agregamos el módulo para el Whitepaper (enlace externo)
 const modules = [
   { label: "Plataforma", icon: "fa-home", items: [
     { name: "News", path: "/news", icon: "fa-bolt" },
@@ -28,7 +29,11 @@ const modules = [
   ] },
   { label: "Seguridad", icon: "fa-shield-alt", items: [
     { name: "Auditoría", path: "/audit-security", icon: "fa-user-shield" }
-  ] }
+  ] },
+  // Módulo de documentación (enlace externo)
+  { label: "Whitepaper", icon: "fa-file-alt", items: [
+    { name: "Whitepaper", path: "/whitepaper/HighPowerWhitepaper.html", icon: "fa-file-contract", external: true }
+  ]}
 ];
 
 export default function BottomNav() {
@@ -36,6 +41,11 @@ export default function BottomNav() {
   const navigate = useNavigate();
 
   const handleNavClick = (idx) => {
+    // Si es externo, abrimos el enlace directamente
+    if (modules[idx].items.length === 1 && modules[idx].items[0].external) {
+      window.open(modules[idx].items[0].path, "_blank", "noopener noreferrer");
+      return;
+    }
     if (modules[idx].items.length === 1) {
       navigate(modules[idx].items[0].path);
     } else {
@@ -56,18 +66,33 @@ export default function BottomNav() {
               <span className="ml-3 text-lg font-bold text-white">{modules[openMenu].label}</span>
             </div>
             <div className="flex flex-col gap-2">
-              {modules[openMenu].items.map((item) => (
-                <button
-                  key={item.path}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-md text-white bg-[#2e294a] hover:bg-[var(--primary-purple)]/90 transition-all"
-                  onClick={() => {
-                    navigate(item.path);
-                    setOpenMenu(null);
-                  }}>
-                  <i className={`fas ${item.icon} text-lg`} />
-                  {item.name}
-                </button>
-              ))}
+              {modules[openMenu].items.map((item) =>
+                item.external ? (
+                  <a
+                    key={item.path}
+                    href={item.path}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-md text-white bg-[#2e294a] hover:bg-[var(--primary-purple)]/90 transition-all"
+                    onClick={() => setOpenMenu(null)}
+                  >
+                    <i className={`fas ${item.icon} text-lg`} />
+                    {item.name}
+                    <i className="fas fa-external-link-alt ml-2 text-xs opacity-60" />
+                  </a>
+                ) : (
+                  <button
+                    key={item.path}
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-md text-white bg-[#2e294a] hover:bg-[var(--primary-purple)]/90 transition-all"
+                    onClick={() => {
+                      navigate(item.path);
+                      setOpenMenu(null);
+                    }}>
+                    <i className={`fas ${item.icon} text-lg`} />
+                    {item.name}
+                  </button>
+                )
+              )}
             </div>
             <button className="w-full mt-4 py-2 text-[var(--primary-purple)] font-semibold" onClick={() => setOpenMenu(null)}>
               Cerrar

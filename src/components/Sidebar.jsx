@@ -48,6 +48,19 @@ const modules = [
     items: [
       { name: "Auditoría", path: "/audit-security", icon: "fa-user-shield" }
     ]
+  },
+  // --- WHITEPAPER ENLACE EXTERNO ---
+  {
+    label: "DOCUMENTACIÓN",
+    icon: "fa-file-alt",
+    items: [
+      {
+        name: "Whitepaper",
+        path: "/whitepaper/HighPowerWhitepaper.html",
+        icon: "fa-file-contract",
+        external: true
+      }
+    ]
   }
 ];
 
@@ -153,27 +166,45 @@ export default function Sidebar() {
             </button>
             {expanded && activeModule === idx && (
               <div className="flex flex-col mt-1 ml-8 animate-fade-in">
-                {mod.items.map((item) => (
-                  <NavLink
-                    key={item.path}
-                    to={item.path}
-                    className={({ isActive }) =>
-                      `group flex items-center gap-3 px-3 py-2 my-1 rounded-lg font-semibold text-base transition-all duration-150
-                      ${
-                        isActive || location.pathname.startsWith(item.path)
-                          ? "bg-[var(--primary-purple)]/95 text-white shadow-lg neon-glow"
-                          : "text-[#bcbef7] hover:text-white hover:bg-[var(--primary-purple)]/20"
-                      }`
-                    }
-                    onClick={() => {
-                      setExpanded(false);
-                      setActiveModule(null);
-                    }}
-                  >
-                    <i className={`fas ${item.icon} text-xl`} />
-                    <span>{item.name}</span>
-                  </NavLink>
-                ))}
+                {mod.items.map((item) =>
+                  item.external ? (
+                    <a
+                      key={item.path}
+                      href={item.path}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group flex items-center gap-3 px-3 py-2 my-1 rounded-lg font-semibold text-base transition-all duration-150 text-[#bcbef7] hover:text-white hover:bg-[var(--primary-purple)]/20"
+                      onClick={() => {
+                        setExpanded(false);
+                        setActiveModule(null);
+                      }}
+                    >
+                      <i className={`fas ${item.icon} text-xl`} />
+                      <span>{item.name}</span>
+                      <i className="fas fa-external-link-alt ml-2 text-xs opacity-60" />
+                    </a>
+                  ) : (
+                    <NavLink
+                      key={item.path}
+                      to={item.path}
+                      className={({ isActive }) =>
+                        `group flex items-center gap-3 px-3 py-2 my-1 rounded-lg font-semibold text-base transition-all duration-150
+                        ${
+                          isActive || location.pathname.startsWith(item.path)
+                            ? "bg-[var(--primary-purple)]/95 text-white shadow-lg neon-glow"
+                            : "text-[#bcbef7] hover:text-white hover:bg-[var(--primary-purple)]/20"
+                        }`
+                      }
+                      onClick={() => {
+                        setExpanded(false);
+                        setActiveModule(null);
+                      }}
+                    >
+                      <i className={`fas ${item.icon} text-xl`} />
+                      <span>{item.name}</span>
+                    </NavLink>
+                  )
+                )}
               </div>
             )}
           </div>
