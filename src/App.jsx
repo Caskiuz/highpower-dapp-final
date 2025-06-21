@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import {
   useAccount,
   useBalance,
@@ -214,130 +214,150 @@ function AppContent() {
     setShowWalletModal(false);
   };
 
+  // ------------------------------
+  // NUEVA LÓGICA DE NAVEGACIÓN DASHBOARD
+  // ------------------------------
+  const navigate = useNavigate();
+  const handleDashboardNavigate = (section) => {
+    if (section === 'nfts') navigate('/nfts');
+    else if (section === 'dao') navigate('/governance');
+    else if (section === 'swap') navigate('/swap');
+    else if (section === 'yield') navigate('/yield');
+  };
+
   return (
-    <Router>
-      <div className="min-h-screen bg-[var(--dark-gray)] text-[var(--light-gray-text)] flex flex-col font-sans">
-        {showModal && <CustomModal message={message} onClose={closeModal} />}
+    <div className="min-h-screen bg-[var(--dark-gray)] text-[var(--light-gray-text)] flex flex-col font-sans">
+      {showModal && <CustomModal message={message} onClose={closeModal} />}
 
-        {showVideoModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-            <div className="relative bg-gray-900 rounded-lg shadow-xl w-full max-w-4xl h-[60vh] md:h-[70vh] flex flex-col">
-              <button
-                onClick={() => setShowVideoModal(false)}
-                className="absolute -top-4 -right-4 bg-red-600 hover:bg-red-700 text-white rounded-full p-2 w-10 h-10 flex items-center justify-center text-xl font-bold z-10 shadow-lg"
-                aria-label="Close video"
-              >
-                &times;
-              </button>
-              <iframe
-                src="https://www.youtube.com/embed/GNh0i7Sg_p4?autoplay=1&mute=0"
-                title="Web3, Blockchain and DeFi Explanation"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                referrerPolicy="strict-origin-when-cross-origin"
-                allowFullScreen
-                className="flex-grow rounded-lg"
-              ></iframe>
-            </div>
+      {showVideoModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="relative bg-gray-900 rounded-lg shadow-xl w-full max-w-4xl h-[60vh] md:h-[70vh] flex flex-col">
+            <button
+              onClick={() => setShowVideoModal(false)}
+              className="absolute -top-4 -right-4 bg-red-600 hover:bg-red-700 text-white rounded-full p-2 w-10 h-10 flex items-center justify-center text-xl font-bold z-10 shadow-lg"
+              aria-label="Close video"
+            >
+              &times;
+            </button>
+            <iframe
+              src="https://www.youtube.com/embed/GNh0i7Sg_p4?autoplay=1&mute=0"
+              title="Web3, Blockchain and DeFi Explanation"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+              className="flex-grow rounded-lg"
+            ></iframe>
           </div>
-        )}
+        </div>
+      )}
 
-        <CursorTrail />
+      <CursorTrail />
 
-        {/* --- WALLET MODAL --- */}
-        <WalletModal
-          open={showWalletModal}
-          onClose={handleCloseWalletModal}
-          onSelectWallet={handleSelectWallet}
+      {/* --- WALLET MODAL --- */}
+      <WalletModal
+        open={showWalletModal}
+        onClose={handleCloseWalletModal}
+        onSelectWallet={handleSelectWallet}
+      />
+
+      {/* Routes */}
+      <Routes>
+        {/* Landing */}
+        <Route
+          path="/"
+          element={
+            <HeroSection
+              onLaunchDapp={() => { window.location.href = "/news"; }}
+              onShowVideo={() => setShowVideoModal(true)}
+            />
+          }
         />
 
-        {/* Routes */}
-        <Routes>
-          {/* Landing */}
-          <Route
-            path="/"
-            element={
-              <HeroSection
-                onLaunchDapp={() => { window.location.href = "/news"; }}
-                onShowVideo={() => setShowVideoModal(true)}
-              />
-            }
-          />
-
-          {/* App layout (all except landing) */}
-          <Route
-            path="*"
-            element={
-              <div className="flex flex-1 flex-col md:flex-row pt-[0px]">
-                {/* Sidebar solo escritorio */}
-                <aside className="hidden md:flex">
-                  <Sidebar onExpandChange={setSidebarWidthPx} />
-                </aside>
-                {/* Main layout envuelto en ContentWrapper */}
-                <ContentWrapper>
-                  <Navbar
-                    isConnected={isConnected}
-                    address={address}
-                    balanceData={balanceData}
-                    hgpBalance={formattedHgpBalance}
-                    nftCount={formattedNftCount}
-                    connect={handleConnectWallet} 
-                    connectors={connectors}
-                    pendingConnector={pendingConnector}
-                    disconnect={disconnect}
-                    HGP_TOKEN_CONFIG={HGP_TOKEN_CONFIG}
-                  />
-                  <main className="flex-1 p-4 md:p-6 lg:p-8 transition-all duration-300 ease-in-out">
-                    <Routes>
-                      <Route path="/news" element={<NewsAnnouncementsSection {...commonSectionProps} {...balanceProps} />} />
-                      <Route path="/dashboard" element={<DashboardSection {...commonSectionProps} {...balanceProps} />} />
-                      <Route path="/whitepaper" element={<WhitepaperSection {...commonSectionProps} />} />
-                      <Route path="/roadmap" element={<RoadmapSection {...commonSectionProps} />} />
-                      <Route path="/audit-security" element={<AuditSecuritySection {...commonSectionProps} />} />
-                      <Route path="/tokenomics" element={<TokenomicsSection {...commonSectionProps} {...balanceProps} />} />
-                      <Route path="/yield" element={<YieldMechanismsSection {...commonSectionProps} {...balanceProps} />} />
-                      <Route path="/nfts" element={<NftGallerySection {...commonSectionProps} {...balanceProps} />} />
-                      <Route path="/governance" element={<DaoSection {...commonSectionProps} {...balanceProps} />} />
-                      <Route path="/incubation" element={<IncubationSection {...commonSectionProps} />} />
-                      <Route path="/partners" element={<PartnersEcosystemSection {...commonSectionProps} />} />
-                      <Route path="/team" element={<TeamSection {...commonSectionProps} />} />
-                      <Route path="/faq" element={<FAQSection {...commonSectionProps} />} />
-                      <Route path="/support" element={<SupportSection {...commonSectionProps} />} />
-                      <Route path="/contact" element={<ContactSection {...commonSectionProps} />} />
-                      <Route path="/about" element={<AboutSection {...commonSectionProps} />} />
-                      <Route path="/tech" element={<TechStackSection {...commonSectionProps} />} />
-                      <Route path="/trading-analytics" element={
-                        <TradingAndAnalyticsSection
-                          isConnected={isConnected}
-                          userAddress={address}
-                          hgpBalance={hgpTokenBalanceData}
-                          bnbBalance={balanceData?.value}
-                          showCustomModal={showCustomModal}
-                        />
-                      } />
-                      <Route path="/swap" element={<SwapSection {...commonSectionProps} {...balanceProps} />} /> {/* NUEVA RUTA */}
-                      {/* Fallback to news */}
-                      <Route path="*" element={<Navigate to="/news" replace />} />
-                    </Routes>
-                  </main>
-                  {/* Bottom nav mobile profesional SOLO móvil */}
-                  <BottomNav />
-                  {/* Footer */}
-                  <footer
-                    className={`bg-gray-900 shadow-inner p-6 text-center text-gray-300 text-sm border-t border-purple-700 transition-all duration-300 ease-in-out`}
-                  >
-                    <p>© 2025 HighPower DApp. All rights reserved.</p>
-                  </footer>
-                </ContentWrapper>
-              </div>
-            }
-          />
-        </Routes>
-      </div>
-    </Router>
+        {/* App layout (all except landing) */}
+        <Route
+          path="*"
+          element={
+            <div className="flex flex-1 flex-col md:flex-row pt-[0px]">
+              {/* Sidebar solo escritorio */}
+              <aside className="hidden md:flex">
+                <Sidebar onExpandChange={setSidebarWidthPx} />
+              </aside>
+              {/* Main layout envuelto en ContentWrapper */}
+              <ContentWrapper>
+                <Navbar
+                  isConnected={isConnected}
+                  address={address}
+                  balanceData={balanceData}
+                  hgpBalance={formattedHgpBalance}
+                  nftCount={formattedNftCount}
+                  connect={handleConnectWallet}
+                  connectors={connectors}
+                  pendingConnector={pendingConnector}
+                  disconnect={disconnect}
+                  HGP_TOKEN_CONFIG={HGP_TOKEN_CONFIG}
+                />
+                <main className="flex-1 p-4 md:p-6 lg:p-8 transition-all duration-300 ease-in-out">
+                  <Routes>
+                    <Route path="/news" element={<NewsAnnouncementsSection {...commonSectionProps} {...balanceProps} />} />
+                    <Route path="/dashboard" element={
+                      <DashboardSection
+                        {...commonSectionProps}
+                        {...balanceProps}
+                        onNavigate={handleDashboardNavigate}
+                      />
+                    } />
+                    <Route path="/whitepaper" element={<WhitepaperSection {...commonSectionProps} />} />
+                    <Route path="/roadmap" element={<RoadmapSection {...commonSectionProps} />} />
+                    <Route path="/audit-security" element={<AuditSecuritySection {...commonSectionProps} />} />
+                    <Route path="/tokenomics" element={<TokenomicsSection {...commonSectionProps} {...balanceProps} />} />
+                    <Route path="/yield" element={<YieldMechanismsSection {...commonSectionProps} {...balanceProps} />} />
+                    <Route path="/nfts" element={<NftGallerySection {...commonSectionProps} {...balanceProps} />} />
+                    <Route path="/governance" element={<DaoSection {...commonSectionProps} {...balanceProps} />} />
+                    <Route path="/incubation" element={<IncubationSection {...commonSectionProps} />} />
+                    <Route path="/partners" element={<PartnersEcosystemSection {...commonSectionProps} />} />
+                    <Route path="/team" element={<TeamSection {...commonSectionProps} />} />
+                    <Route path="/faq" element={<FAQSection {...commonSectionProps} />} />
+                    <Route path="/support" element={<SupportSection {...commonSectionProps} />} />
+                    <Route path="/contact" element={<ContactSection {...commonSectionProps} />} />
+                    <Route path="/about" element={<AboutSection {...commonSectionProps} />} />
+                    <Route path="/tech" element={<TechStackSection {...commonSectionProps} />} />
+                    <Route path="/trading-analytics" element={
+                      <TradingAndAnalyticsSection
+                        isConnected={isConnected}
+                        userAddress={address}
+                        hgpBalance={hgpTokenBalanceData}
+                        bnbBalance={balanceData?.value}
+                        showCustomModal={showCustomModal}
+                      />
+                    } />
+                    <Route path="/swap" element={<SwapSection {...commonSectionProps} {...balanceProps} />} />
+                    {/* Fallback to news */}
+                    <Route path="*" element={<Navigate to="/news" replace />} />
+                  </Routes>
+                </main>
+                {/* Bottom nav mobile profesional SOLO móvil */}
+                <BottomNav />
+                {/* Footer */}
+                <footer
+                  className={`bg-gray-900 shadow-inner p-6 text-center text-gray-300 text-sm border-t border-purple-700 transition-all duration-300 ease-in-out`}
+                >
+                  <p>© 2025 HighPower DApp. All rights reserved.</p>
+                </footer>
+              </ContentWrapper>
+            </div>
+          }
+        />
+      </Routes>
+    </div>
   );
 }
 
+// El componente App envuelve AppContent para usar hooks de react-router-dom correctamente
 export default function App() {
-  return <AppContent />;
+  return (
+    <Router>
+      <AppContent />
+    </Router>
+  );
 }
