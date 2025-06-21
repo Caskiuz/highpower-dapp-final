@@ -1,73 +1,63 @@
 import React, { useState, useEffect, useRef } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 
-const modules = [
+// 5 MODULOS PRINCIPALES, agrupando por afinidad y peso inversor/proyecto
+const sidebarSections = [
   {
-    label: "PLATAFORMA",
+    label: "Dashboard",
     icon: "fa-home",
     items: [
-      { name: "News", path: "/news", icon: "fa-bolt" },
-      { name: "Dashboard", path: "/dashboard", icon: "fa-gauge" },
-      { name: "Roadmap", path: "/roadmap", icon: "fa-route" },
-      { name: "About", path: "/about", icon: "fa-circle-info" },
-      { name: "Equipo", path: "/team", icon: "fa-users" },
-      { name: "Tecnología", path: "/tech", icon: "fa-microchip" },
-      { name: "Ecosistema", path: "/partners", icon: "fa-cubes" },
-      { name: "Incubación", path: "/incubation", icon: "fa-lightbulb" }
-    ]
+      { name: "Resumen", path: "/dashboard", icon: "fa-gauge" },
+      { name: "NFTs", path: "/nfts", icon: "fa-gem" },
+      { name: "Noticias", path: "/news", icon: "fa-bolt" },
+    ],
   },
   {
-    label: "FINANZAS & TOKENS",
+    label: "Finanzas",
     icon: "fa-wallet",
     items: [
       { name: "Swap", path: "/swap", icon: "fa-sync-alt" },
-      { name: "Staking", path: "/yield", icon: "fa-coins" },
-      { name: "Trading/Analytics", path: "/trading-analytics", icon: "fa-chart-line" }
-    ]
+      { name: "Staking/Yield", path: "/yield", icon: "fa-coins" },
+      { name: "Futuros", path: "/trading-analytics", icon: "fa-chart-line" },
+    ],
   },
   {
-    label: "NFTs & MARKETPLACE",
-    icon: "fa-gem",
-    items: [
-      { name: "Galería NFT", path: "/nfts", icon: "fa-images" }
-    ]
-  },
-  {
-    label: "COMUNIDAD & GOBERNANZA",
+    label: "Comunidad",
     icon: "fa-users",
     items: [
-      { name: "DAO", path: "/governance", icon: "fa-users-cog" },
+      { name: "Gobernanza", path: "/governance", icon: "fa-users-cog" },
+      { name: "FAQ", path: "/faq", icon: "fa-question" },
       { name: "Soporte", path: "/support", icon: "fa-headset" },
-      { name: "FAQ", path: "/faq", icon: "fa-question-circle" },
-      { name: "Contacto", path: "/contact", icon: "fa-envelope" }
-    ]
+      { name: "Contacto", path: "/contact", icon: "fa-envelope" },
+    ],
   },
   {
-    label: "SEGURIDAD & TRANSPARENCIA",
+    label: "Proyecto",
+    icon: "fa-rocket",
+    items: [
+      { name: "Roadmap", path: "/roadmap", icon: "fa-route" },
+      { name: "Equipo", path: "/team", icon: "fa-users" },
+      { name: "Socios", path: "/partners", icon: "fa-cubes" },
+      { name: "Incubación", path: "/incubation", icon: "fa-lightbulb" },
+      { name: "Sobre", path: "/about", icon: "fa-circle-info" },
+    ],
+  },
+  {
+    label: "Transparencia",
     icon: "fa-shield-alt",
     items: [
-      { name: "Auditoría", path: "/audit-security", icon: "fa-user-shield" }
-    ]
+      { name: "Tokenomics", path: "/tokenomics", icon: "fa-coins" },
+      { name: "Whitepaper", path: "/whitepaper/HighPowerWhitepaper.html", icon: "fa-file-contract", external: true },
+      { name: "Auditoría", path: "/audit-security", icon: "fa-user-shield" },
+      { name: "Tech Stack", path: "/tech", icon: "fa-microchip" },
+    ],
   },
-  // --- WHITEPAPER ENLACE EXTERNO ---
-  {
-    label: "DOCUMENTACIÓN",
-    icon: "fa-file-alt",
-    items: [
-      {
-        name: "Whitepaper",
-        path: "/whitepaper/HighPowerWhitepaper.html",
-        icon: "fa-file-contract",
-        external: true
-      }
-    ]
-  }
 ];
 
 const SIDEBAR_EXPANDED_KEY = "hgp_sidebar_expanded";
 const NAVBAR_HEIGHT = 64; // px
 
-export default function Sidebar() {
+export default function Sidebar({ onExpandChange }) {
   const location = useLocation();
   const sidebarRef = useRef(null);
 
@@ -82,8 +72,11 @@ export default function Sidebar() {
   const [activeModule, setActiveModule] = useState(null);
 
   useEffect(() => {
+    if (onExpandChange) {
+      onExpandChange(expanded ? 240 : 56);
+    }
     localStorage.setItem(SIDEBAR_EXPANDED_KEY, JSON.stringify(expanded));
-  }, [expanded]);
+  }, [expanded, onExpandChange]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -118,18 +111,19 @@ export default function Sidebar() {
     <aside
       ref={sidebarRef}
       className={`hidden md:flex flex-col bg-gradient-to-b from-[#232146] via-[#201c3a] to-[#181629] pt-4 border-r-2 border-[var(--primary-purple)] shadow-2xl z-30 fixed left-0 transition-all duration-200 ease-in-out
-      ${expanded ? "w-64" : "w-20"}`}
+      ${expanded ? "w-64" : "w-14"}`}
       style={{
         minHeight: `calc(100vh - ${NAVBAR_HEIGHT}px)`,
         height: `calc(100vh - ${NAVBAR_HEIGHT}px)`,
-        top: `${NAVBAR_HEIGHT}px`
+        top: `${NAVBAR_HEIGHT}px`,
+        overflowY: "auto"
       }}
     >
       <nav className="flex flex-col gap-2 mt-2">
-        {modules.map((mod, idx) => (
+        {sidebarSections.map((mod, idx) => (
           <div key={mod.label} className="relative group">
             <button
-              className={`flex items-center justify-center w-full py-6 rounded-lg transition-all duration-150 cursor-pointer
+              className={`flex items-center justify-center w-full py-5 rounded-lg transition-all duration-150 cursor-pointer
                 ${
                   expanded && activeModule === idx
                     ? "bg-[var(--primary-purple)]/90 text-white neon-glow"
@@ -165,7 +159,7 @@ export default function Sidebar() {
               )}
             </button>
             {expanded && activeModule === idx && (
-              <div className="flex flex-col mt-1 ml-8 animate-fade-in">
+              <div className="flex flex-col mt-1 ml-8 animate-fade-in max-h-[45vh] overflow-y-auto pr-2">
                 {mod.items.map((item) =>
                   item.external ? (
                     <a
